@@ -8,5 +8,8 @@ import (
 
 func main() {
 	location := geocoding.SearchLocation("Okhtyrka")
-	fmt.Println(weather.SearchWeather(location))
+	wr := weather.GetCurrentWeather(location)
+	fmt.Println("Location: ", location)
+	fmt.Println("Weather: ", wr)
+	fmt.Scanln()
 }

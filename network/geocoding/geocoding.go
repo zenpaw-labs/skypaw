@@ -9,7 +9,8 @@ import (
 	"skypaw/network"
 )
 
-type GeocodingResponce struct {
+//goland:noinspection GoNameStartsWithPackageName
+type GeocodingResponse struct {
 	Results        []LocationInfo `json:"results"`
 	GenerationTime float64        `json:"generationtime_ms"`
 }
@@ -37,14 +38,18 @@ type LocationInfo struct {
 }
 
 func SearchLocation(name string) LocationInfo {
+	/*
+		Request generated according to Geocoding API of OpenMeteo.
+		Docs of Geocoding API: https://open-meteo.com/en/docs/geocoding-api
+	*/
 	var (
 		locatonInfo LocationInfo
-		geoData     GeocodingResponce
+		geoData     GeocodingResponse
 	)
 
 	params := url.Values{}
 	params.Add("name", name)
-	var fullUrl string = network.GeocodingEndpointApi + "search?" + params.Encode()
+	fullUrl := network.GeocodingEndpointApi + "search?" + params.Encode()
 
 	resp, err := http.Get(fullUrl)
 	if err != nil {
