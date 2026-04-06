@@ -37,11 +37,12 @@ type LocationInfo struct {
 	Admin4ID    int     `json:"admin4_id"`
 }
 
+/*
+	Request generated according to Geocoding API of OpenMeteo.
+	Docs of Geocoding API: https://open-meteo.com/en/docs/geocoding-api
+*/
+
 func SearchLocation(name string) LocationInfo {
-	/*
-		Request generated according to Geocoding API of OpenMeteo.
-		Docs of Geocoding API: https://open-meteo.com/en/docs/geocoding-api
-	*/
 	var (
 		locatonInfo LocationInfo
 		geoData     GeocodingResponse

@@ -31,11 +31,19 @@ type CurrentWeather struct {
 	IsDay         int     `json:"is_day"`
 }
 
-func GetCurrentWeather(locationInfo geocoding.LocationInfo) WeatherResponse {
-	/*
-		Request generated for according to API Scheme of current weather by OpenMeteo
-		Docs of current weather API: https://open-meteo.com/en/docs#current_weather
-	*/
+/*
+	Requests generated for according to API Scheme of current weather by OpenMeteo
+	Docs of current weather API: https://open-meteo.com/en/docs#current_weather
+*/
+
+func GetCurrentWeather(location string) (WeatherResponse, geocoding.LocationInfo) {
+	locationInfo := geocoding.SearchLocation(location)
+	weather := GetCurrentWeatherByLocationInfo(locationInfo)
+	return weather, locationInfo
+}
+
+func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) WeatherResponse {
+
 	var (
 		weatherResponse WeatherResponse
 	)
@@ -65,4 +73,9 @@ func GetCurrentWeather(locationInfo geocoding.LocationInfo) WeatherResponse {
 		fmt.Println("An error occurred: ", err, ".")
 	}
 	return weatherResponse
+}
+
+func GetCurrentWeatherFromCoordinates() string {
+	// TODO
+	return "sex"
 }
