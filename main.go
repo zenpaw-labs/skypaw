@@ -6,8 +6,7 @@ import (
 )
 
 func main() {
-
 	wr, _ := weather.GetCurrentWeather("Okhtyrka")
-	fmt.Println("Weather: ", wr)
+	fmt.Println("Weather: ", weather.GetCurrentWeatherName(wr.CurrentWeather.WeatherCode))
 	fmt.Scanln()
 }
