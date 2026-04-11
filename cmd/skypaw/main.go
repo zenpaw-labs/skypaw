@@ -2,13 +2,13 @@ package main
 
 import (
 	"skypaw/ui"
-	"skypaw/utils"
+	"skypaw/utils/path"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-	go utils.AddToPath()
+	go path.AddToPath()
 	m := ui.InitialModel("Okhtyrka")
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {

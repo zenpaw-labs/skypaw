@@ -1,1 +1,2 @@
-build: `go build -ldflags="-s -w" ./cmd/skypaw`
+build: `go build -ldflags="-s -w" ./cmd/skypaw` <br>
+goreleaser: `goreleaser release --snapshot --clean`

@@ -1,4 +1,6 @@
-package utils
+//go:build windows
+
+package path
 
 import (
 	"os"
@@ -8,28 +10,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func AddToPath() error {
-	osName := GetRuntimeOs()
-	switch osName {
-	case "windows":
-		err := windows()
-		if err != nil {
-			return err
-		}
-		return nil
-
-	case "darwin":
-		darwin()
-		return nil
-
-	case "linux":
-		linux()
-		return nil
-	}
-	return nil
-}
-
-func windows() error {
+func addToPath(sys string) error {
 	path, err := os.Executable()
 	if err != nil {
 		return err
@@ -61,13 +42,5 @@ func windows() error {
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func darwin() error {
-	return nil
-}
-
-func linux() error {
 	return nil
 }
