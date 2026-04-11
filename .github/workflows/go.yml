@@ -1,0 +1,40 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build for ${{ matrix.goos }}-${{ matrix.goarch }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          BINARY_NAME=skypaw
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY_NAME="skypaw.exe"
+          fi
+          
+          go build -v -o release/$BINARY_NAME ./cmd/skypaw
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: skypaw-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: release/

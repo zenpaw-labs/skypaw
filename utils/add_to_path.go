@@ -51,7 +51,12 @@ func windows() error {
 		return nil
 	}
 
-	newPath := oldPath + ";" + targetDir
+	divider := ""
+	if !strings.HasSuffix(oldPath, ";") {
+		divider = ";"
+	}
+
+	newPath := oldPath + divider + targetDir + ";"
 	err = k.SetStringValue("Path", newPath)
 	if err != nil {
 		return err
