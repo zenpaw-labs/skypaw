@@ -69,13 +69,16 @@ type CurrentWeather struct {
 	Docs of current weather API: https://open-meteo.com/en/docs#current_weather
 */
 
-func GetCurrentWeather(location string) (WeatherResponse, geocoding.LocationInfo) {
+func GetCurrentWeather(location string) (WeatherResponse, geocoding.LocationInfo, error) {
 	locationInfo := geocoding.SearchLocation(location)
-	weather := GetCurrentWeatherByLocationInfo(locationInfo)
-	return weather, locationInfo
+	weather, err := GetCurrentWeatherByLocationInfo(locationInfo)
+	if err != nil {
+		return weather, locationInfo, err
+	}
+	return weather, locationInfo, nil
 }
 
-func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) WeatherResponse {
+func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (WeatherResponse, error) {
 
 	var (
 		weatherResponse WeatherResponse
@@ -91,21 +94,21 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) Weathe
 	resp, err := http.Get(fullUrl)
 	if err != nil {
 		fmt.Println("An error occurred: ", err, ".")
-		return weatherResponse
+		return weatherResponse, err
 	}
 	defer resp.Body.Close()
 
 	bodyResp, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("An error occurred: ", err, ".")
-		return weatherResponse
+		return weatherResponse, err
 	}
 
 	err = json.Unmarshal(bodyResp, &weatherResponse)
 	if err != nil {
 		fmt.Println("An error occurred: ", err, ".")
 	}
-	return weatherResponse
+	return weatherResponse, nil
 }
 
 func GetCurrentWeatherFromCoordinates() string {

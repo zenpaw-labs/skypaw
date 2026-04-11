@@ -1,0 +1,1 @@
+build: `go build -ldflags="-s -w" ./cmd/skypaw`
