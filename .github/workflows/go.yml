@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        goos: [windows]
+        goos: [linux, windows, darwin]
         goarch: [amd64, arm64]
 
     steps:
