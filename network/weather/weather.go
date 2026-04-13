@@ -71,14 +71,14 @@ type CurrentWeather struct {
 
 func GetCurrentWeather(location string) (WeatherResponse, geocoding.LocationInfo, error) {
 	locationInfo := geocoding.SearchLocation(location)
-	weather, err := GetCurrentWeatherByLocationInfo(locationInfo)
+	weather, locationInfo, err := GetCurrentWeatherByLocationInfo(locationInfo)
 	if err != nil {
 		return weather, locationInfo, err
 	}
 	return weather, locationInfo, nil
 }
 
-func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (WeatherResponse, error) {
+func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (WeatherResponse, geocoding.LocationInfo, error) {
 
 	var (
 		weatherResponse WeatherResponse
@@ -94,26 +94,25 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (Weath
 	resp, err := http.Get(fullUrl)
 	if err != nil {
 		fmt.Println("An error occurred: ", err, ".")
-		return weatherResponse, err
+		return weatherResponse, locationInfo, err
 	}
 	defer resp.Body.Close()
 
 	bodyResp, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("An error occurred: ", err, ".")
-		return weatherResponse, err
+		return weatherResponse, locationInfo, err
 	}
 
 	err = json.Unmarshal(bodyResp, &weatherResponse)
 	if err != nil {
-		fmt.Println("An error occurred: ", err, ".")
+		return weatherResponse, locationInfo, err
 	}
-	return weatherResponse, nil
+	return weatherResponse, locationInfo, nil
 }
 
-func GetCurrentWeatherFromCoordinates() string {
-	// TODO
-	return "sex"
+func GetCurrentWeatherFromCoordinates(info geocoding.LocationInfo) (WeatherResponse, geocoding.LocationInfo, error) {
+	return GetCurrentWeatherByLocationInfo(info)
 }
 
 func GetCurrentWeatherName(weatherCode int) string {

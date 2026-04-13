@@ -37,7 +37,7 @@ func InitialModel(city string) Model {
 
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		FetchWeather(m.City),
+		FetchWeatherWithAutoLocation(),
 		DoTick(),
 	)
 }
@@ -81,7 +81,6 @@ func (m Model) View() string {
 	}
 
 	if m.IsLoading == 1 {
-		// Центрируем надпись загрузки
 		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "⏳ Loading weather info . . .")
 	}
 

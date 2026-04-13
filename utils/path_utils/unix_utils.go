@@ -1,6 +1,6 @@
 //go:build !windows
 
-package path
+package path_utils
 
 func addToPath(sys string) error {
 	switch sys {

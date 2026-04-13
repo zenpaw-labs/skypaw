@@ -1,4 +1,4 @@
-package path
+package path_utils
 
 import (
 	"skypaw/utils"
