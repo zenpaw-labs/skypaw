@@ -10,6 +10,14 @@ import (
 )
 
 func getLocationCoordinates(osName string) (geocoding.LocationInfo, error) {
+	location, err := locationDetectorByPS()
+	if err != nil {
+		return geocoding.LocationDetectByNetwork()
+	}
+	return location, err
+}
+
+func locationDetectorByPS() (geocoding.LocationInfo, error) {
 	var (
 		locationInfo geocoding.LocationInfo
 	)
@@ -36,8 +44,8 @@ func getLocationCoordinates(osName string) (geocoding.LocationInfo, error) {
 	}
 
 	err = json.Unmarshal(out.Bytes(), &locationInfo)
-	if err != nil {
-		return locationInfo, err
+	if err != nil || (locationInfo.Latitude == 0 && locationInfo.Longitude == 0) {
+		return geocoding.LocationDetectByNetwork()
 	}
 	return locationInfo, nil
 }

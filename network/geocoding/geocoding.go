@@ -39,6 +39,26 @@ type LocationInfo struct {
 }
 
 /*
+Response from http://ip-api.com/json
+*/
+type ipApiResponse struct {
+	Status      string  `json:"status"`
+	Country     string  `json:"country"`
+	CountryCode string  `json:"countryCode"`
+	Region      string  `json:"region"`
+	RegionName  string  `json:"regionName"`
+	City        string  `json:"city"`
+	Zip         string  `json:"zip"`
+	Lat         float64 `json:"lat"`
+	Lon         float64 `json:"lon"`
+	Timezone    string  `json:"timezone"`
+	Isp         string  `json:"isp"`
+	Org         string  `json:"org"`
+	As          string  `json:"as"`
+	Query       string  `json:"query"`
+}
+
+/*
 	Request generated according to Geocoding API of OpenMeteo.
 	Docs of Geocoding API: https://open-meteo.com/en/docs/geocoding-api
 */
@@ -113,4 +133,29 @@ func GetLocationFromCoords(l LocationInfo) (LocationInfo, error) {
 	}
 	locInfo.Name = data.Locality
 	return locInfo, nil
+}
+
+func LocationDetectByNetwork() (LocationInfo, error) {
+	var (
+		locationInfo = LocationInfo{}
+		response     = ipApiResponse{}
+	)
+
+	resp, err := http.Get(network.CurrenLocationFromNetworkEndpointApi)
+	if err != nil {
+		return locationInfo, err
+	}
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return locationInfo, err
+	}
+	err = json.Unmarshal(b, &response)
+	if err != nil {
+		return locationInfo, err
+	}
+
+	locationInfo.Latitude = response.Lat
+	locationInfo.Longitude = response.Lon
+	return locationInfo, nil
 }
