@@ -6,8 +6,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"skypaw/network"
 	"strconv"
+
+	"github.com/zenpaw-labs/skypaw/network"
 )
 
 //goland:noinspection GoNameStartsWithPackageName

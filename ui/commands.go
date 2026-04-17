@@ -1,11 +1,12 @@
 package ui
 
 import (
-	"skypaw/network/geocoding"
-	"skypaw/network/weather"
-	"skypaw/utils"
-	"skypaw/utils/location_utils"
 	"time"
+
+	"github.com/zenpaw-labs/skypaw/network/geocoding"
+	"github.com/zenpaw-labs/skypaw/network/weather"
+	"github.com/zenpaw-labs/skypaw/utils"
+	"github.com/zenpaw-labs/skypaw/utils/location_utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

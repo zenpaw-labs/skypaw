@@ -1,7 +1,7 @@
 package path_utils
 
 import (
-	"skypaw/utils"
+	"github.com/zenpaw-labs/skypaw/utils"
 )
 
 func AddToPath() error {

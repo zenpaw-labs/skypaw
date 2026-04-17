@@ -1,4 +1,4 @@
-module skypaw
+module github.com/zenpaw-labs/skypaw
 
 go 1.26
 

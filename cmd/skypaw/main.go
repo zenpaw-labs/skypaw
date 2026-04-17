@@ -1,8 +1,8 @@
 package main
 
 import (
-	"skypaw/ui"
-	"skypaw/utils/path_utils"
+	"github.com/zenpaw-labs/skypaw/ui"
+	"github.com/zenpaw-labs/skypaw/utils/path_utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

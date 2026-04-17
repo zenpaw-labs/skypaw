@@ -6,10 +6,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"skypaw/network"
-	"skypaw/network/geocoding"
 	"strconv"
 	"strings"
+
+	"github.com/zenpaw-labs/skypaw/network"
+	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
 
 var (

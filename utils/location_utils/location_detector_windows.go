@@ -6,7 +6,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"os/exec"
-	"skypaw/network/geocoding"
+
+	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
 
 func getLocationCoordinates(osName string) (geocoding.LocationInfo, error) {

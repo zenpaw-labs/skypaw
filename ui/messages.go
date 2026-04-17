@@ -1,9 +1,10 @@
 package ui
 
 import (
-	"skypaw/network/geocoding"
-	"skypaw/network/weather"
 	"time"
+
+	"github.com/zenpaw-labs/skypaw/network/geocoding"
+	"github.com/zenpaw-labs/skypaw/network/weather"
 )
 
 type WeatherMsg struct {

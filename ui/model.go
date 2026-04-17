@@ -2,10 +2,11 @@ package ui
 
 import (
 	"fmt"
-	"skypaw/ascii"
-	"skypaw/network/geocoding"
-	"skypaw/network/weather"
 	"time"
+
+	"github.com/zenpaw-labs/skypaw/ascii"
+	"github.com/zenpaw-labs/skypaw/network/geocoding"
+	"github.com/zenpaw-labs/skypaw/network/weather"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
