@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/zenpaw-labs/skypaw/ascii"
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 	"github.com/zenpaw-labs/skypaw/network/weather"
-
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type Model struct {
@@ -28,9 +27,8 @@ type Model struct {
 	Height int
 }
 
-func InitialModel(city string) Model {
+func InitialModel() Model {
 	return Model{
-		City:        city,
 		CurrentTime: time.Now(),
 		IsLoading:   1,
 	}
@@ -38,13 +36,22 @@ func InitialModel(city string) Model {
 
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		FetchWeatherWithAutoLocation(),
+		FetchLocation(),
 		DoTick(),
 	)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case GeocodingMsg:
+		m.Location = msg.Data
+		m.IsLoading = 2
+		return m, FetchWeather(m.Location)
+	case WeatherMsg:
+		m.Weather = msg.Data
+		m.Location = msg.LocationInfo
+		m.IsLoading = 0
+		return m, DoTick()
 
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
@@ -60,12 +67,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case WeatherMsg:
-		m.Weather = msg.Data
-		m.Location = msg.LocationInfo
-		m.IsLoading = 0
-		return m, DoTick()
-
 	case ErrMsg:
 		m.Err = msg.Err
 		m.IsLoading = -1
@@ -79,6 +80,10 @@ func (m Model) View() string {
 
 	if m.Err != nil {
 		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "❌ Error: "+m.Err.Error())
+	}
+
+	if m.IsLoading == 1 {
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "⏳ Loading location info . . .")
 	}
 
 	if m.IsLoading == 1 {

@@ -5,15 +5,14 @@ import (
 
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 	"github.com/zenpaw-labs/skypaw/network/weather"
-	"github.com/zenpaw-labs/skypaw/utils"
 	"github.com/zenpaw-labs/skypaw/utils/location_utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func FetchWeather(city string) tea.Cmd {
+func FetchWeather(location geocoding.LocationInfo) tea.Cmd {
 	return func() tea.Msg {
-		res, info, err := weather.GetCurrentWeather(city)
+		res, info, err := weather.GetCurrentWeather(location.Name)
 		if err != nil {
 			return ErrMsg{err}
 		}
@@ -21,22 +20,19 @@ func FetchWeather(city string) tea.Cmd {
 	}
 }
 
-func FetchWeatherWithAutoLocation() tea.Cmd {
+func FetchLocationByName(location string) tea.Cmd {
 	return func() tea.Msg {
-		c, err := location_utils.GetLocationFromOs(utils.GetRuntimeOs())
-		if err != nil {
-			return ErrMsg{err}
-		}
+		return GeocodingMsg{Data: geocoding.SearchLocation(location)}
+	}
+}
 
-		w, _, err := weather.GetCurrentWeatherFromCoordinates(c)
+func FetchLocation() tea.Cmd {
+	return func() tea.Msg {
+		l, err := location_utils.GetLocationFromOs()
 		if err != nil {
 			return ErrMsg{err}
 		}
-		location, err := geocoding.GetLocationFromCoords(c)
-		if err != nil {
-			return ErrMsg{err}
-		}
-		return WeatherMsg{Data: w, LocationInfo: location}
+		return GeocodingMsg{l}
 	}
 }
 

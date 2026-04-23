@@ -10,7 +10,7 @@ import (
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
 
-func getLocationCoordinates(osName string) (geocoding.LocationInfo, error) {
+func getLocationCoordinates() (geocoding.LocationInfo, error) {
 	location, err := locationDetectorByPS()
 	if err != nil {
 		return geocoding.LocationDetectByNetwork()

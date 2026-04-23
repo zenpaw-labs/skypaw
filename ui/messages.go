@@ -7,6 +7,10 @@ import (
 	"github.com/zenpaw-labs/skypaw/network/weather"
 )
 
+type GeocodingMsg struct {
+	Data geocoding.LocationInfo
+}
+
 type WeatherMsg struct {
 	Data         weather.WeatherResponse
 	LocationInfo geocoding.LocationInfo
