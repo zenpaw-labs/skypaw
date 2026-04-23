@@ -12,7 +12,7 @@ import (
 
 func getLocationCoordinates() (geocoding.LocationInfo, error) {
 	location, err := locationDetectorByPS()
-	if err != nil {
+	if err != nil || (location.Latitude == 0 && location.Longitude == 0) {
 		return geocoding.LocationDetectByNetwork()
 	}
 	return location, err
@@ -46,7 +46,7 @@ func locationDetectorByPS() (geocoding.LocationInfo, error) {
 
 	err = json.Unmarshal(out.Bytes(), &locationInfo)
 	if err != nil || (locationInfo.Latitude == 0 && locationInfo.Longitude == 0) {
-		return geocoding.LocationDetectByNetwork()
+		return locationInfo, err
 	}
 	return locationInfo, nil
 }

@@ -28,7 +28,7 @@ func FetchLocationByName(location string) tea.Cmd {
 
 func FetchLocation() tea.Cmd {
 	return func() tea.Msg {
-		l, err := location_utils.GetLocationFromOs()
+		l, err := location_utils.GetLocation()
 		if err != nil {
 			return ErrMsg{err}
 		}

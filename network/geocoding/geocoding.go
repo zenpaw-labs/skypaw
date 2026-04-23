@@ -100,40 +100,40 @@ func SearchLocation(name string) LocationInfo {
 }
 
 func GetLocationFromCoords(l LocationInfo) (LocationInfo, error) {
-	var (
-		locInfo = LocationInfo{}
-	)
-
 	apiEnd := network.ReverseGeocodingApi
-	var (
-		lat = l.Latitude
-		lon = l.Longitude
-	)
 
 	values := url.Values{}
-	values.Add("latitude", strconv.FormatFloat(lat, 'f', -1, 64))
-	values.Add("longitude", strconv.FormatFloat(lon, 'f', -1, 64))
+	values.Add("latitude", strconv.FormatFloat(l.Latitude, 'f', -1, 64))
+	values.Add("longitude", strconv.FormatFloat(l.Longitude, 'f', -1, 64))
+
 	fullUrl := apiEnd + "reverse-geocode-client?" + values.Encode()
 
 	resp, err := http.Get(fullUrl)
 	if err != nil {
-		return locInfo, err
+		return l, err
 	}
+	defer resp.Body.Close()
+
 	var data struct {
 		City     string `json:"city"`
 		Locality string `json:"locality"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return locInfo, err
+		return l, err
 	}
 
-	if data.Locality != "" {
-		locInfo.Name = data.Locality
-		return locInfo, nil
+	cityName := data.Locality
+	if cityName == "" {
+		cityName = data.City
 	}
-	locInfo.Name = data.Locality
-	return locInfo, nil
+
+	if cityName == "" {
+		return l, fmt.Errorf("city name not found for coords: %+v", l)
+	}
+
+	l.Name = cityName
+	return l, nil
 }
 
 func LocationDetectByNetwork() (LocationInfo, error) {

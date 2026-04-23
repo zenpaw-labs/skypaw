@@ -18,9 +18,11 @@ type Model struct {
 	Location geocoding.LocationInfo
 
 	// Status
-	CurrentTime time.Time
-	IsLoading   int
-	Err         error
+	CurrentTime    time.Time
+	CurrentWeekday time.Weekday
+	CurrentMonth   time.Month
+	IsLoading      int
+	Err            error
 
 	// Window
 	Width  int
@@ -83,35 +85,38 @@ func (m Model) View() string {
 	}
 
 	if m.IsLoading == 1 {
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "⏳ Loading location info . . .")
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "📍 Loading location info, please wait.")
 	}
 
-	if m.IsLoading == 1 {
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "⏳ Loading weather info . . .")
+	if m.IsLoading == 2 {
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "⛅ Loading weather info, please wait.")
 	}
 
 	if m.Err != nil {
 		return "❌ Error: " + m.Err.Error()
 	}
 
-	if m.IsLoading == 1 {
-		return "\n  ⏳ Loading weather info . . ."
-	}
-
 	weatherArt := ascii.GetCurrentWeatherArt(m.Weather.CurrentWeather.WeatherCode)
 
 	timeStr := m.CurrentTime.Format("15:04:05")
+	dateStr := fmt.Sprintf(
+		"%s, %s, %d",
+		m.CurrentTime.Weekday(),
+		m.CurrentTime.Month(),
+		m.CurrentTime.Day(),
+	)
 
 	s := fmt.Sprintf(
-		"\n  🏙  City: %s\n\n"+
-			"%s\n\n"+
-			"  🌡  Temperature: %.1f°C\n"+
-			"  🕒 Time: %s\n\n"+
-			"  ('q' for exit)",
+		"📍 %s\n\n"+ // Location data
+			"%s\n\n"+ // ASCII Art
+			"%.1f°C\n\n"+ // Weather Temperature
+			"%s\n"+ // Time
+			"%s\n", // Weekday
 		m.Location.Name,
 		weatherArt,
 		m.Weather.CurrentWeather.Temperature2m,
 		timeStr,
+		dateStr,
 	)
 
 	return lipgloss.Place(

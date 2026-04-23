@@ -4,7 +4,7 @@ import (
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
 
-func GetLocationFromOs() (geocoding.LocationInfo, error) {
+func GetLocation() (geocoding.LocationInfo, error) {
 	coords, err := getLocationCoordinates()
 	if err != nil {
 		return coords, err
