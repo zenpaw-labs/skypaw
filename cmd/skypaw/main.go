@@ -1,16 +1,23 @@
 package main
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/zenpaw-labs/skypaw/ui"
+	"os"
+	"runtime"
+	"runtime/pprof"
+
+	"github.com/zenpaw-labs/skypaw/cmd"
 )
 
 func main() {
 	// go path_utils.AddToPath()
-	m := ui.InitialModel()
-	p := tea.NewProgram(m, tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
-		panic(err)
-	}
+	cpuFile, _ := os.Create("cpu.prof")
+	pprof.StartCPUProfile(cpuFile)
+	defer pprof.StopCPUProfile()
 
+	cmd.Execute()
+
+	memFile, _ := os.Create("mem.prof")
+	defer memFile.Close()
+	runtime.GC()
+	pprof.WriteHeapProfile(memFile)
 }
