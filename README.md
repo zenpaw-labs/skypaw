@@ -23,7 +23,7 @@ skypaw
 ### Build from sources
 To build the production-ready binary (only your platform):
 ```
-go build -ldflags="-s -w" ./cmd/skypaw
+go build -ldflags="-X 'github.com/zenpaw-labs/skypaw/cmd.semVersion=dev' -s -w" ./cmd/skypaw
 ```
 To run the build binaries ready for release: 
 ```
