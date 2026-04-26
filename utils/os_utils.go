@@ -2,7 +2,6 @@ package utils
 
 import (
 	"os"
-	"path/filepath"
 	"runtime"
 )
 
@@ -23,5 +22,5 @@ func GetBinaryDir() string {
 	if err != nil {
 		panic(err)
 	}
-	return filepath.Dir(ex)
+	return ex
 }

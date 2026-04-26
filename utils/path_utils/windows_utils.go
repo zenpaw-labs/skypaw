@@ -11,7 +11,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func addToPath(sys string) error {
+func addToPath() error {
 	err := addToWindowsPath(utils.GetBinaryDir())
 	if err != nil {
 		return err

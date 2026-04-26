@@ -2,29 +2,33 @@
 
 package path_utils
 
-func addToPath(sys string) error {
-	switch sys {
+import (
+	"fmt"
+	"os"
 
-	case "darwin":
-		err := addToPathDarwin()
-		if err != nil {
-			return err
-		}
-		return nil
+	"github.com/zenpaw-labs/skypaw/utils"
+)
 
-	case "linux":
-		err := addToPathLinux()
-		if err != nil {
-			return err
-		}
+func addToPath() error {
+	return installUnix(utils.GetBinaryDir())
+}
+
+func installUnix(path string) error {
+	targetPath := "/usr/local/bin/skypaw"
+
+	input, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("Could not read binary: %w", err)
 	}
-	return nil
-}
 
-func addToPathDarwin() error {
-	return nil
-}
+	err = os.WriteFile(targetPath, input, 0755)
+	if err != nil {
+		if os.IsPermission(err) {
+			return fmt.Errorf("Permission denied. Please run: sudo ./skypaw --install")
+		}
+		return fmt.Errorf("Could not install: %w", err)
+	}
 
-func addToPathLinux() error {
+	fmt.Printf("Successfully installed to %s.\n", targetPath)
 	return nil
 }

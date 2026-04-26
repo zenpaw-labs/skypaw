@@ -41,7 +41,7 @@ var rootCmd = &cobra.Command{
 		if install {
 			err := path_utils.AddToPath()
 			if err != nil {
-				fmt.Println("Error while installing:", err)
+				fmt.Println(err)
 				return
 			}
 			if utils.GetRuntimeOs() == "windows" {
