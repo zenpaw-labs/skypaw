@@ -7,6 +7,7 @@ import (
 	"runtime/pprof"
 
 	"github.com/zenpaw-labs/skypaw/utils"
+	"github.com/zenpaw-labs/skypaw/utils/path_utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -37,12 +38,24 @@ var rootCmd = &cobra.Command{
 			defer stop()
 		}
 
+		if install {
+			err := path_utils.AddToPath()
+			if err != nil {
+				fmt.Println("Error while installing:", err)
+				return
+			}
+			if utils.GetRuntimeOs() == "windows" {
+				fmt.Println("You may need to restart your PC or shell to apply changes.")
+			}
+			return
+		}
+
 		if config {
 			path := utils.GetConfigDir()
 			fmt.Println(path)
 			return
 		}
-		p := tea.NewProgram(ui.InitialModel(&optionalProvider), tea.WithAltScreen())
+		p := tea.NewProgram(ui.InitialModel(&optionalProvider, semVersion), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			panic(err)
 		}
@@ -58,12 +71,13 @@ func Execute() {
 
 func init() {
 	cobra.MousetrapHelpText = ""
-	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "p", 0, "select a weather provider - enter 1 or 2 along with the parameter.")
-	rootCmd.Flags().BoolVarP(&version, "version", "v", false, "displays current version of the app.")
-	rootCmd.Flags().BoolVarP(&profiler, "profiler", "m", false, "enables the profiler of cpu and memory.")
-	rootCmd.Flags().BoolVarP(&config, "config", "f", false, "displays path to your config file.")
-	rootCmd.Flags().BoolVarP(&install, "install", "i", false, "adding the app to your path directory to run everywhere.")
 	rootCmd.Flags().StringVarP(&city, "city", "c", "", "city to check weather for.")
+	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "w", 0, "select a weather provider - enter 1 or 2 along with the parameter.")
+	rootCmd.Flags().BoolVarP(&install, "install", "i", false, "adding the app to your path directory to run everywhere.")
+	rootCmd.Flags().BoolVarP(&config, "config", "f", false, "displays path to your config file.")
+	rootCmd.Flags().BoolVarP(&profiler, "profiler", "p", false, "enables the profiler of cpu and memory.")
+	rootCmd.Flags().BoolVarP(&version, "version", "v", false, "displays current version of the app.")
+
 }
 
 func startProfiling() func() {

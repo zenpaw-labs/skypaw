@@ -3,44 +3,53 @@
 package path_utils
 
 import (
-	"os"
-	"path/filepath"
+	"errors"
+	"fmt"
 	"strings"
 
+	"github.com/zenpaw-labs/skypaw/utils"
 	"golang.org/x/sys/windows/registry"
 )
 
 func addToPath(sys string) error {
-	path, err := os.Executable()
+	err := addToWindowsPath(utils.GetBinaryDir())
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
-	targetDir := filepath.Dir(path)
+func addToWindowsPath(dir string) error {
 	k, err := registry.OpenKey(registry.CURRENT_USER, `Environment`, registry.QUERY_VALUE|registry.SET_VALUE)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open registry: %w", err)
 	}
 	defer k.Close()
 
-	oldPath, _, err := k.GetStringValue("Path")
-	if err != nil {
+	currentPath, _, err := k.GetStringValue("Path")
+	if err != nil && !errors.Is(err, registry.ErrNotExist) {
 		return err
 	}
 
-	if strings.Contains(oldPath, targetDir) {
-		return nil
+	paths := strings.Split(currentPath, ";")
+	for _, p := range paths {
+		if strings.EqualFold(strings.TrimSpace(p), dir) {
+			fmt.Println("Skypaw is already in the PATH!")
+			return nil
+		}
 	}
 
-	divider := ""
-	if !strings.HasSuffix(oldPath, ";") {
-		divider = ";"
+	newPath := currentPath
+	if newPath != "" && !strings.HasSuffix(newPath, ";") {
+		newPath += ";"
 	}
+	newPath += dir
 
-	newPath := oldPath + divider + targetDir + ";"
-	err = k.SetStringValue("Path", newPath)
+	err = k.SetExpandStringValue("Path", newPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to update Path: %w", err)
 	}
+
+	fmt.Println("Successfully added to PATH!")
 	return nil
 }

@@ -30,11 +30,13 @@ type Model struct {
 
 	// Other
 	optionalProvider *int
+	Version          string
 }
 
-func InitialModel(optionalProvider *int) Model {
+func InitialModel(optionalProvider *int, version string) Model {
 	return Model{
 		optionalProvider: optionalProvider,
+		Version:          version,
 		CurrentTime:      time.Now(),
 		IsLoading:        1,
 	}
@@ -89,11 +91,42 @@ func (m Model) View() string {
 	}
 
 	if m.IsLoading == 1 {
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "📍 Loading location info, please wait.")
+		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "📍 Loading location info, please wait.")
+		versionStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#000000")).
+			Background(lipgloss.Color("#FFFFFF")).
+			Bold(true).
+			Padding(0, 2)
+
+		versionBlock := versionStyle.Render(m.Version)
+		footer := lipgloss.Place(
+			m.Width,
+			1,
+			lipgloss.Right,
+			lipgloss.Bottom,
+			versionBlock,
+		)
+		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
 
 	if m.IsLoading == 2 {
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "⛅ Loading weather info, please wait.")
+		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "⛅ Loading weather info, please wait.")
+
+		versionStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#000000")).
+			Background(lipgloss.Color("#FFFFFF")).
+			Bold(true).
+			Padding(0, 2)
+
+		versionBlock := versionStyle.Render(m.Version)
+		footer := lipgloss.Place(
+			m.Width,
+			1,
+			lipgloss.Right,
+			lipgloss.Bottom,
+			versionBlock,
+		)
+		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
 
 	if m.Err != nil {

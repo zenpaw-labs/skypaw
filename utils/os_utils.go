@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"runtime"
 	"os"
+	"path/filepath"
+	"runtime"
 )
 
 func GetRuntimeOs() string {
@@ -15,4 +16,12 @@ func GetConfigDir() string {
 		configDir = "."
 	}
 	return configDir
+}
+
+func GetBinaryDir() string {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	return filepath.Dir(ex)
 }
