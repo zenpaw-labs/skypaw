@@ -5,6 +5,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+
 	"github.com/zenpaw-labs/skypaw/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,12 +14,13 @@ import (
 )
 
 var (
-	semVersion = "dev"
-	version bool
-	profiler bool
-	config  bool
-	install bool
-	city    string
+	semVersion       = "dev"
+	optionalProvider int
+	version          bool
+	profiler         bool
+	config           bool
+	install          bool
+	city             string
 )
 
 var rootCmd = &cobra.Command{
@@ -40,7 +42,7 @@ var rootCmd = &cobra.Command{
 			fmt.Println(path)
 			return
 		}
-		p := tea.NewProgram(ui.InitialModel(), tea.WithAltScreen())
+		p := tea.NewProgram(ui.InitialModel(&optionalProvider), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			panic(err)
 		}
@@ -56,22 +58,23 @@ func Execute() {
 
 func init() {
 	cobra.MousetrapHelpText = ""
+	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "p", 0, "select a weather provider - enter 1 or 2 along with the parameter.")
 	rootCmd.Flags().BoolVarP(&version, "version", "v", false, "displays current version of the app.")
-	rootCmd.Flags().BoolVarP(&profiler, "profiler", "p", false, "enables the profiler of cpu and memory.")
+	rootCmd.Flags().BoolVarP(&profiler, "profiler", "m", false, "enables the profiler of cpu and memory.")
 	rootCmd.Flags().BoolVarP(&config, "config", "f", false, "displays path to your config file.")
 	rootCmd.Flags().BoolVarP(&install, "install", "i", false, "adding the app to your path directory to run everywhere.")
 	rootCmd.Flags().StringVarP(&city, "city", "c", "", "city to check weather for.")
 }
 
 func startProfiling() func() {
-    cpuFile, _ := os.Create("cpu.prof")
-    pprof.StartCPUProfile(cpuFile)
-    
-    return func() {
-        pprof.StopCPUProfile()
-        memFile, _ := os.Create("mem.prof")
-        runtime.GC()
-        pprof.WriteHeapProfile(memFile)
-        memFile.Close()
-    }
+	cpuFile, _ := os.Create("cpu.prof")
+	pprof.StartCPUProfile(cpuFile)
+
+	return func() {
+		pprof.StopCPUProfile()
+		memFile, _ := os.Create("mem.prof")
+		runtime.GC()
+		pprof.WriteHeapProfile(memFile)
+		memFile.Close()
+	}
 }

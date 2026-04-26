@@ -27,18 +27,22 @@ type Model struct {
 	// Window
 	Width  int
 	Height int
+
+	// Other
+	optionalProvider *int
 }
 
-func InitialModel() Model {
+func InitialModel(optionalProvider *int) Model {
 	return Model{
-		CurrentTime: time.Now(),
-		IsLoading:   1,
+		optionalProvider: optionalProvider,
+		CurrentTime:      time.Now(),
+		IsLoading:        1,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		FetchLocation(),
+		FetchLocation(m.optionalProvider),
 		DoTick(),
 	)
 }
@@ -100,19 +104,19 @@ func (m Model) View() string {
 
 	timeStr := m.CurrentTime.Format("15:04:05")
 	dateStr := fmt.Sprintf(
-		"%s, %s, %d",
+		"%s, %s %d",
 		m.CurrentTime.Weekday(),
 		m.CurrentTime.Month(),
 		m.CurrentTime.Day(),
 	)
-
+	loc := fmt.Sprintf("📍 %s, %s", m.Location.Admin1, m.Location.Name)
 	s := fmt.Sprintf(
-		"📍 %s\n\n"+ // Location data
+		"%s\n\n"+ // Location data
 			"%s\n\n"+ // ASCII Art
 			"%.1f°C\n\n"+ // Weather Temperature
 			"%s\n"+ // Time
 			"%s\n", // Weekday
-		m.Location.Name,
+		loc,
 		weatherArt,
 		m.Weather.CurrentWeather.Temperature2m,
 		timeStr,

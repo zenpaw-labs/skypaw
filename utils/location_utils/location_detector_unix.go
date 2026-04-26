@@ -6,6 +6,6 @@ import (
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
 
-func getLocationCoordinates() (geocoding.LocationInfo, error) {
-	return geocoding.LocationDetectByNetwork()
+func getLocationCoordinates(optionalProvider *int) (geocoding.LocationInfo, error) {
+	return geocoding.LocationDetectByNetwork(optionalProvider)
 }

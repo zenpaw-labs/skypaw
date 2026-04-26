@@ -4,15 +4,10 @@ import (
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
 
-func GetLocation() (geocoding.LocationInfo, error) {
-	coords, err := getLocationCoordinates()
+func GetLocation(optionalProvider *int) (geocoding.LocationInfo, error) {
+	coords, err := getLocationCoordinates(optionalProvider)
 	if err != nil {
 		return coords, err
 	}
-	locName, err := geocoding.GetLocationFromCoords(coords)
-	if err != nil {
-		return coords, err
-	}
-	coords.Name = locName.Name
 	return coords, nil
 }

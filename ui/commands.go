@@ -26,9 +26,9 @@ func FetchLocationByName(location string) tea.Cmd {
 	}
 }
 
-func FetchLocation() tea.Cmd {
+func FetchLocation(optionalProvider *int) tea.Cmd {
 	return func() tea.Msg {
-		l, err := location_utils.GetLocation()
+		l, err := location_utils.GetLocation(optionalProvider)
 		if err != nil {
 			return ErrMsg{err}
 		}

@@ -10,10 +10,10 @@ import (
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
 
-func getLocationCoordinates() (geocoding.LocationInfo, error) {
+func getLocationCoordinates(optionalProvider *int) (geocoding.LocationInfo, error) {
 	location, err := locationDetectorByPS()
 	if err != nil || (location.Latitude == 0 && location.Longitude == 0) {
-		return geocoding.LocationDetectByNetwork()
+		return geocoding.LocationDetectByNetwork(optionalProvider)
 	}
 	return location, err
 }
@@ -48,5 +48,6 @@ func locationDetectorByPS() (geocoding.LocationInfo, error) {
 	if err != nil || (locationInfo.Latitude == 0 && locationInfo.Longitude == 0) {
 		return locationInfo, err
 	}
+	geocoding.FillLocationInfoFromCoords(&locationInfo)
 	return locationInfo, nil
 }

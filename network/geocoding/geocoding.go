@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/zenpaw-labs/skypaw/network"
 )
@@ -39,10 +40,10 @@ type LocationInfo struct {
 	Admin4ID    int     `json:"admin4_id"`
 }
 
-/*
-Response from http://ip-api.com/json
-*/
-type ipApiResponse struct {
+type IPAPIResponse struct {
+	/*
+		Response from http://ip-api.com/json
+	*/
 	Status      string  `json:"status"`
 	Country     string  `json:"country"`
 	CountryCode string  `json:"countryCode"`
@@ -53,18 +54,42 @@ type ipApiResponse struct {
 	Lat         float64 `json:"lat"`
 	Lon         float64 `json:"lon"`
 	Timezone    string  `json:"timezone"`
-	Isp         string  `json:"isp"`
+	ISP         string  `json:"isp"`
 	Org         string  `json:"org"`
 	As          string  `json:"as"`
 	Query       string  `json:"query"`
 }
 
-/*
-	Request generated according to Geocoding API of OpenMeteo.
-	Docs of Geocoding API: https://open-meteo.com/en/docs/geocoding-api
-*/
+type IPInfoResponse struct {
+	/*
+		The struct data is under https://ipinfo.io/json response.
+	*/
+	IP       string `json:"ip"`
+	City     string `json:"city"`
+	Region   string `json:"region"`
+	Country  string `json:"country"`
+	LOC      string `json:"loc"`
+	Org      string `json:"org"`
+	Postal   string `json:"postal"`
+	Timezone string `json:"timezone"`
+	Readme   string `json:"readme"`
+}
+
+type BigDataResponse struct {
+	/*
+		Response from https://api.bigdatacloud.net/data/
+	*/
+	City                 string `json:"city"`
+	Locality             string `json:"locality"`
+	CountryName          string `json:"countryName"`
+	PrincipalSubdivision string `json:"principalSubdivision"`
+}
 
 func SearchLocation(name string) LocationInfo {
+	/*
+		Request generated according to Geocoding API of OpenMeteo.
+		Docs of Geocoding API: https://open-meteo.com/en/docs/geocoding-api
+	*/
 	var (
 		locatonInfo LocationInfo
 		geoData     GeocodingResponse
@@ -99,50 +124,41 @@ func SearchLocation(name string) LocationInfo {
 	return locatonInfo
 }
 
-func GetLocationFromCoords(l LocationInfo) (LocationInfo, error) {
-	apiEnd := network.ReverseGeocodingApi
-
-	values := url.Values{}
-	values.Add("latitude", strconv.FormatFloat(l.Latitude, 'f', -1, 64))
-	values.Add("longitude", strconv.FormatFloat(l.Longitude, 'f', -1, 64))
-
-	fullUrl := apiEnd + "reverse-geocode-client?" + values.Encode()
-
+func FillLocationInfoFromCoords(l *LocationInfo) {
+	v := url.Values{}
+	v.Add("latitude", strconv.FormatFloat(l.Latitude, 'f', -1, 64))
+	v.Add("longitude", strconv.FormatFloat(l.Longitude, 'f', -1, 64))
+	fullUrl := network.ReverseGeocodingApi + "reverse-geocode-client?" + v.Encode()
 	resp, err := http.Get(fullUrl)
 	if err != nil {
-		return l, err
+		return
+	}
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	locData := BigDataResponse{}
+	err = json.Unmarshal(b, &locData)
+	if err != nil {
+		return
 	}
 	defer resp.Body.Close()
 
-	var data struct {
-		City     string `json:"city"`
-		Locality string `json:"locality"`
+	if locData.Locality != "" {
+		l.Name = locData.Locality
+	} else {
+		l.Name = locData.City
 	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return l, err
-	}
-
-	cityName := data.Locality
-	if cityName == "" {
-		cityName = data.City
-	}
-
-	if cityName == "" {
-		return l, fmt.Errorf("city name not found for coords: %+v", l)
-	}
-
-	l.Name = cityName
-	return l, nil
+	l.Country = locData.CountryName
+	l.Admin1 = locData.PrincipalSubdivision
 }
 
-func LocationDetectByNetwork() (LocationInfo, error) {
+func locationDetectByNetworkIpApi() (LocationInfo, error) {
 	var (
 		locationInfo = LocationInfo{}
-		response     = ipApiResponse{}
+		response     = IPAPIResponse{}
 	)
-
-	resp, err := http.Get(network.CurrenLocationFromNetworkEndpointApi)
+	resp, err := http.Get(network.DetectLocationByNetworkIpApi)
 	if err != nil {
 		return locationInfo, err
 	}
@@ -155,8 +171,50 @@ func LocationDetectByNetwork() (LocationInfo, error) {
 	if err != nil {
 		return locationInfo, err
 	}
-
 	locationInfo.Latitude = response.Lat
 	locationInfo.Longitude = response.Lon
+	locationInfo.Name = response.City
+	locationInfo.Country = response.Country
+	locationInfo.Admin1 = response.Region
 	return locationInfo, nil
+}
+
+func locationDetectByNetworkIpInfo() (LocationInfo, error) {
+	var (
+		locationInfo = LocationInfo{}
+		response     = IPInfoResponse{}
+	)
+
+	resp, err := http.Get(network.DetectLocationByNetworkIpInfo)
+	if err != nil {
+		return locationInfo, err
+	}
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return locationInfo, err
+	}
+	err = json.Unmarshal(b, &response)
+	if err != nil {
+		return locationInfo, err
+	}
+	l := strings.Split(response.LOC, ",")
+	lat := l[0]
+	lon := l[1]
+	locationInfo.Latitude, _ = strconv.ParseFloat(lat, 64)
+	locationInfo.Longitude, _ = strconv.ParseFloat(lon, 64)
+	locationInfo.Name = response.City
+	locationInfo.Country = response.Country
+	locationInfo.Admin1 = response.Region
+	return locationInfo, nil
+}
+func LocationDetectByNetwork(optionalProvider *int) (LocationInfo, error) {
+	switch *optionalProvider {
+	case 1:
+		return locationDetectByNetworkIpApi()
+	case 2:
+		return locationDetectByNetworkIpInfo()
+	default:
+		return locationDetectByNetworkIpApi()
+	}
 }
