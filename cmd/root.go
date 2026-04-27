@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 
+	"github.com/zenpaw-labs/skypaw/network"
 	"github.com/zenpaw-labs/skypaw/utils"
 	"github.com/zenpaw-labs/skypaw/utils/path_utils"
 
@@ -31,6 +32,17 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if version {
 			fmt.Println(semVersion)
+			updatesAvailable, newVersion, err := utils.IsUpdatesAvailable(semVersion)
+			if err != nil {
+				fmt.Println("An error occurred while checking for updates.", err)
+				return
+			}
+			if updatesAvailable {
+				s := fmt.Sprintf("A new version is available: %s!\nUpdate with your packet manager or download it from GitHub: %s.", newVersion, network.GithubLatestReleasePage)
+				fmt.Println(s)
+			} else {
+				fmt.Println("Already up to date, no need to update.")
+			}
 			return
 		}
 		if profiler {
