@@ -9,6 +9,11 @@ Open the cmd and run:
 ```
 winget install skypaw
 ```
+### Arch Linux (AUR)
+Run in shell:
+```
+yay -S skypaw-bin
+```
 
 ### Others platforms
 Check the [release page](https://github.com/zenpaw-labs/skypaw/releases).
@@ -25,7 +30,7 @@ To build the production-ready binary (only your platform):
 ```
 go build -ldflags="-X 'github.com/zenpaw-labs/skypaw/cmd.semVersion=dev' -s -w" ./cmd/skypaw
 ```
-To run the build binaries ready for release: 
+To run the build binaries ready for release:
 ```
 goreleaser release --snapshot --clean
 ```
