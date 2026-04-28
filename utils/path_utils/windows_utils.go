@@ -23,7 +23,7 @@ func addToPath() error {
 func addToWindowsPath(dir string) error {
 	k, err := registry.OpenKey(registry.CURRENT_USER, `Environment`, registry.QUERY_VALUE|registry.SET_VALUE)
 	if err != nil {
-		return fmt.Errorf("failed to open registry: %w", err)
+		return fmt.Errorf("Failed to open registry: %w", err)
 	}
 	defer k.Close()
 
@@ -35,7 +35,7 @@ func addToWindowsPath(dir string) error {
 	paths := strings.Split(currentPath, ";")
 	for _, p := range paths {
 		if strings.EqualFold(strings.TrimSpace(p), dir) {
-			fmt.Println("Skypaw is already in the PATH!")
+			fmt.Println("skypaw is already in the PATH!")
 			return nil
 		}
 	}
@@ -48,7 +48,7 @@ func addToWindowsPath(dir string) error {
 
 	err = k.SetExpandStringValue("Path", newPath)
 	if err != nil {
-		return fmt.Errorf("failed to update Path: %w", err)
+		return fmt.Errorf("Failed to update Path: %w", err)
 	}
 
 	fmt.Println("Successfully added to PATH!")
