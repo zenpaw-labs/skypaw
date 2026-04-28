@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/zenpaw-labs/skypaw/utils"
 )
 
 func addToPath() error {
-	return installUnix(utils.GetBinaryDir())
+	return installUnix(getBinaryDir())
 }
 
 func installUnix(path string) error {
@@ -31,4 +30,12 @@ func installUnix(path string) error {
 
 	fmt.Printf("Successfully installed to %s.\n", targetPath)
 	return nil
+}
+
+func getBinaryDir() string {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	return ex
 }

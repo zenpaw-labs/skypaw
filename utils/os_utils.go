@@ -17,11 +17,3 @@ func GetConfigDir() string {
 	}
 	return filepath.Join(configDir, "skypaw")
 }
-
-func GetBinaryDir() string {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	return ex
-}

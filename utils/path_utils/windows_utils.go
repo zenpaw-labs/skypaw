@@ -5,14 +5,15 @@ package path_utils
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/zenpaw-labs/skypaw/utils"
 	"golang.org/x/sys/windows/registry"
 )
 
 func addToPath() error {
-	err := addToWindowsPath(utils.GetBinaryDir())
+	err := addToWindowsPath(getBinaryDir())
 	if err != nil {
 		return err
 	}
@@ -52,4 +53,13 @@ func addToWindowsPath(dir string) error {
 
 	fmt.Println("Successfully added to PATH!")
 	return nil
+}
+
+func getBinaryDir() string {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	d := filepath.Dir(ex)
+	return d
 }
