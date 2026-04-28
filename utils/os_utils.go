@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 )
 
@@ -14,7 +15,7 @@ func GetConfigDir() string {
 	if err != nil {
 		configDir = "."
 	}
-	return configDir
+	return filepath.Join(configDir, "skypaw")
 }
 
 func GetBinaryDir() string {

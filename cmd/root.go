@@ -97,7 +97,7 @@ func init() {
 
 func startProfiling() func() {
 	t := time.Now().Format("20060102_150405")
-    path := filepath.Join(utils.GetConfigDir(), "skypaw/profiler", t)
+    path := filepath.Join(utils.GetConfigDir(), "profiler", t)
     _ = os.MkdirAll(path, 0755) 
 
     cpuFile, _ := os.Create(filepath.Join(path, "cpu.prof"))

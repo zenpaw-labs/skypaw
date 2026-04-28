@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -143,6 +144,12 @@ func (m Model) View() string {
 
 	weatherArt := ascii.GetCurrentWeatherArt(m.Weather.CurrentWeather.WeatherCode)
 
+	var cleanArtLines []string
+	for _, line := range strings.Split(strings.TrimSpace(weatherArt), "\n") {
+		cleanArtLines = append(cleanArtLines, strings.TrimSpace(line))
+	}
+	cleanArt := strings.Join(cleanArtLines, "\n")
+
 	timeStr := m.CurrentTime.Format("15:04:05")
 	dateStr := fmt.Sprintf(
 		"%s, %s %d",
@@ -151,15 +158,16 @@ func (m Model) View() string {
 		m.CurrentTime.Day(),
 	)
 	loc := fmt.Sprintf("📍 %s, %s", m.Location.Admin1, m.Location.Name)
-	s := fmt.Sprintf(
-		"%s\n\n"+ // Location data
-			"%s\n\n"+ // ASCII Art
-			"%.1f°C\n\n"+ // Weather Temperature
-			"%s\n"+ // Time
-			"%s\n", // Weekday
+	temp := fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
+
+	s := lipgloss.JoinVertical(
+		lipgloss.Center,
 		loc,
-		weatherArt,
-		m.Weather.CurrentWeather.Temperature2m,
+		"",         
+		cleanArt,   
+		"",         
+		temp,
+		"",         
 		timeStr,
 		dateStr,
 	)
