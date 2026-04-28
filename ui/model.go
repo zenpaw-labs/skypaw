@@ -28,13 +28,17 @@ type Model struct {
 	Width  int
 	Height int
 
-	// Other
+	// User config
 	optionalProvider *int
+	customCity string
+
+	// Other
 	Version          string
 }
 
-func InitialModel(optionalProvider *int, version string) Model {
+func InitialModel(optionalProvider *int, version string, city string) Model {
 	return Model{
+		customCity: city,
 		optionalProvider: optionalProvider,
 		Version:          version,
 		CurrentTime:      time.Now(),
@@ -43,10 +47,14 @@ func InitialModel(optionalProvider *int, version string) Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(
-		FetchLocation(m.optionalProvider),
-		DoTick(),
-	)
+	var cmds []tea.Cmd
+	if m.customCity != "" {
+		cmds = append(cmds, FetchLocationByName(m.customCity))
+	} else {
+		cmds = append(cmds, FetchLocation(m.optionalProvider))
+	}
+	cmds = append(cmds, DoTick())
+	return tea.Batch(cmds...)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

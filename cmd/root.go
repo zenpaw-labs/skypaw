@@ -3,8 +3,10 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"runtime/pprof"
+	"time"
 
 	"github.com/zenpaw-labs/skypaw/network"
 	"github.com/zenpaw-labs/skypaw/utils"
@@ -45,6 +47,7 @@ var rootCmd = &cobra.Command{
 			}
 			return
 		}
+
 		if profiler {
 			stop := startProfiling()
 			defer stop()
@@ -67,7 +70,7 @@ var rootCmd = &cobra.Command{
 			fmt.Println(path)
 			return
 		}
-		p := tea.NewProgram(ui.InitialModel(&optionalProvider, semVersion), tea.WithAltScreen())
+		p := tea.NewProgram(ui.InitialModel(&optionalProvider, semVersion, city), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			panic(err)
 		}
@@ -93,14 +96,20 @@ func init() {
 }
 
 func startProfiling() func() {
-	cpuFile, _ := os.Create("cpu.prof")
-	pprof.StartCPUProfile(cpuFile)
+	t := time.Now().Format("20060102_150405")
+    path := filepath.Join(utils.GetConfigDir(), "skypaw/profiler", t)
+    _ = os.MkdirAll(path, 0755) 
 
-	return func() {
-		pprof.StopCPUProfile()
-		memFile, _ := os.Create("mem.prof")
-		runtime.GC()
+    cpuFile, _ := os.Create(filepath.Join(path, "cpu.prof"))
+    
+    pprof.StartCPUProfile(cpuFile)
+
+    return func() {
+        pprof.StopCPUProfile()
+        cpuFile.Close()
+        memFile, _ := os.Create(filepath.Join(path, "mem.prof"))
+        runtime.GC()
 		pprof.WriteHeapProfile(memFile)
-		memFile.Close()
-	}
+        defer memFile.Close()
+    }
 }
