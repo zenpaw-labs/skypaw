@@ -16,6 +16,7 @@ builds:
       - arm64
     ldflags:
       - -w -s
+      - -X 'github.com/zenpaw-labs/skypaw/cmd.semVersion=v1.0.0'
 
 archives:
   - format: binary

@@ -83,6 +83,10 @@ type Author struct {
 }
 
 func IsUpdatesAvailable(currentVersion string) (bool, string, error) {
+	cVer, err := semver.NewVersion(currentVersion)
+	if err != nil {
+		return false, "", err
+	}
 	httpsResp, err := http.Get(network.GithubLatestReleaseEndpoint)
 	if err != nil {
 		return false, "", err
@@ -94,10 +98,6 @@ func IsUpdatesAvailable(currentVersion string) (bool, string, error) {
 		return false, "", err
 	}
 	json.Unmarshal(b, &githubResponse)
-	cVer, err := semver.NewVersion(currentVersion)
-	if err != nil {
-		return false, "", err
-	}
 	lVer, err := semver.NewVersion(githubResponse.TagName)
 	if err != nil {
 		return false, "", err
