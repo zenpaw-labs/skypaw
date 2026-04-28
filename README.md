@@ -37,3 +37,7 @@ goreleaser release --snapshot --clean
 
 ## 📄 License
 This project is licensed under the [MIT License](LICENSE)
+
+## ☕ Support the project
+#### If you find this project useful, you can buy me a coffee!
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I3I51YMHG4)<br>
