@@ -70,15 +70,6 @@ type CurrentWeather struct {
 	Docs of current weather API: https://open-meteo.com/en/docs#current_weather
 */
 
-func GetCurrentWeather(location string) (WeatherResponse, geocoding.LocationInfo, error) {
-	locationInfo := geocoding.SearchLocation(location)
-	weather, locationInfo, err := GetCurrentWeatherByLocationInfo(locationInfo)
-	if err != nil {
-		return weather, locationInfo, err
-	}
-	return weather, locationInfo, nil
-}
-
 func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (WeatherResponse, geocoding.LocationInfo, error) {
 
 	var (
@@ -112,8 +103,8 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (Weath
 	return weatherResponse, locationInfo, nil
 }
 
-func GetCurrentWeatherFromCoordinates(info geocoding.LocationInfo) (WeatherResponse, geocoding.LocationInfo, error) {
-	return GetCurrentWeatherByLocationInfo(info)
+func GetSunriseAndSunset(location geocoding.LocationInfo) (string sunrise, string sunset, error) {
+	// TODO: sunrise and sunset data
 }
 
 func GetCurrentWeatherName(weatherCode int) string {

@@ -24,7 +24,7 @@ var (
 	profiler         bool
 	config           bool
 	install          bool
-	city             string
+	location             string
 )
 
 var rootCmd = &cobra.Command{
@@ -43,7 +43,7 @@ var rootCmd = &cobra.Command{
 				s := fmt.Sprintf("A new version is available: %s!\nUpdate with your packet manager or download it from GitHub: %s.", newVersion, network.GithubLatestReleasePage)
 				fmt.Println(s)
 			} else {
-				fmt.Println("Already up to date, no need to update.")
+				fmt.Println("Already up to date.")
 			}
 			return
 		}
@@ -70,7 +70,7 @@ var rootCmd = &cobra.Command{
 			fmt.Println(path)
 			return
 		}
-		p := tea.NewProgram(ui.InitialModel(&optionalProvider, semVersion, city), tea.WithAltScreen())
+		p := tea.NewProgram(ui.InitialModel(&optionalProvider, semVersion, location), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			panic(err)
 		}
@@ -86,13 +86,17 @@ func Execute() {
 
 func init() {
 	cobra.MousetrapHelpText = ""
-	rootCmd.Flags().StringVarP(&city, "city", "c", "", "city to check weather for.")
+	rootCmd.Flags().StringVarP(&location, "location", "l", "", "location to check weather for.")
 	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "w", 0, "select a weather provider - enter 1 or 2 along with the parameter.")
 	rootCmd.Flags().BoolVarP(&install, "install", "i", false, "adding the app to your path directory to run everywhere.")
 	rootCmd.Flags().BoolVarP(&config, "config", "f", false, "displays path to your config file.")
 	rootCmd.Flags().BoolVarP(&profiler, "profiler", "p", false, "enables the profiler of cpu and memory.")
 	rootCmd.Flags().BoolVarP(&version, "version", "v", false, "displays current version of the app.")
+}
 
+func initConfig() error {
+	// TODO: Config file
+	return nil
 }
 
 func startProfiling() func() {

@@ -153,6 +153,17 @@ func FillLocationInfoFromCoords(l *LocationInfo) {
 	l.Admin1 = locData.PrincipalSubdivision
 }
 
+func LocationDetectByNetwork(optionalProvider *int) (LocationInfo, error) {
+	switch *optionalProvider {
+	case 1:
+		return locationDetectByNetworkIpApi()
+	case 2:
+		return locationDetectByNetworkIpInfo()
+	default:
+		return locationDetectByNetworkIpApi()
+	}
+}
+
 func locationDetectByNetworkIpApi() (LocationInfo, error) {
 	var (
 		locationInfo = LocationInfo{}
@@ -207,14 +218,4 @@ func locationDetectByNetworkIpInfo() (LocationInfo, error) {
 	locationInfo.Country = response.Country
 	locationInfo.Admin1 = response.Region
 	return locationInfo, nil
-}
-func LocationDetectByNetwork(optionalProvider *int) (LocationInfo, error) {
-	switch *optionalProvider {
-	case 1:
-		return locationDetectByNetworkIpApi()
-	case 2:
-		return locationDetectByNetworkIpInfo()
-	default:
-		return locationDetectByNetworkIpApi()
-	}
 }

@@ -5,7 +5,5 @@ import (
 )
 
 func main() {
-	// go path_utils.AddToPath()
 	cmd.Execute()
-
 }

@@ -158,15 +158,17 @@ func (m Model) View() string {
 		m.CurrentTime.Day(),
 	)
 	loc := fmt.Sprintf("📍 %s, %s", m.Location.Admin1, m.Location.Name)
+	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
 	temp := fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
 
 	s := lipgloss.JoinVertical(
 		lipgloss.Center,
 		loc,
 		"",         
-		cleanArt,   
+		cleanArt,  
 		"",         
 		temp,
+		weatherName,
 		"",         
 		timeStr,
 		dateStr,

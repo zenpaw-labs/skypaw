@@ -12,7 +12,7 @@ import (
 
 func FetchWeather(location geocoding.LocationInfo) tea.Cmd {
 	return func() tea.Msg {
-		res, info, err := weather.GetCurrentWeather(location.Name)
+		res, info, err := weather.GetCurrentWeatherByLocationInfo(location)
 		if err != nil {
 			return ErrMsg{err}
 		}
