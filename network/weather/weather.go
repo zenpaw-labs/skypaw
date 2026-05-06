@@ -65,13 +65,39 @@ type CurrentWeather struct {
 	IsDay         int     `json:"is_day"`
 }
 
+type SunriseAndSunsetResponse struct {
+	/*
+	Struct generated for according to response from OpenMeteo daily weather
+	Learn more: https://open-meteo.com/en/docs#daily_weather_variables
+	*/
+	Latitude             float64    `json:"latitude"`
+	Longitude            float64    `json:"longitude"`
+	GenerationtimeMS     float64    `json:"generationtime_ms"`
+	UTCOffsetSeconds     int64      `json:"utc_offset_seconds"`
+	Timezone             string     `json:"timezone"`
+	TimezoneAbbreviation string     `json:"timezone_abbreviation"`
+	Elevation            int64      `json:"elevation"`
+	DailyUnits           DailyUnits `json:"daily_units"`
+	Daily                Daily      `json:"daily"`
+}
+
+type Daily struct {
+	Time    []string `json:"time"`
+	Sunrise []string `json:"sunrise"`
+	Sunset  []string `json:"sunset"`
+}
+
+type DailyUnits struct {
+	Time    string `json:"time"`
+	Sunrise string `json:"sunrise"`
+	Sunset  string `json:"sunset"`
+}
+
+func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (WeatherResponse, geocoding.LocationInfo, error) {
 /*
 	Requests generated for according to API Scheme of current weather by OpenMeteo
 	Docs of current weather API: https://open-meteo.com/en/docs#current_weather
 */
-
-func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (WeatherResponse, geocoding.LocationInfo, error) {
-
 	var (
 		weatherResponse WeatherResponse
 	)
@@ -103,8 +129,32 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (Weath
 	return weatherResponse, locationInfo, nil
 }
 
-func GetSunriseAndSunset(location geocoding.LocationInfo) (string sunrise, string sunset, error) {
+func GetSunriseAndSunset(location geocoding.LocationInfo) (SunriseAndSunsetResponse, error) {
 	// TODO: sunrise and sunset data
+/*
+	Request generated according to API of sunrise and sunset of OpenMeteo
+	Docs of Daily weather (including sunset & sunrise): https://open-meteo.com/en/docs#daily_weather_variables
+*/
+	data := SunriseAndSunsetResponse{}
+	values := url.Values{}
+	values.Add("latitude", strconv.FormatFloat(location.Latitude, 'f', -1, 64))
+	values.Add("longitude", strconv.FormatFloat(location.Longitude, 'f', -1, 64))
+	values.Add("daily", "sunrise,sunset")
+	values.Add("timezone", "auto")
+	f := network.WeatherEndpointApi + "forecast?" + values.Encode()
+	
+	resp, err := http.Get(f)
+	if err != nil {
+		return data, err
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+		if err != nil {
+		return data, err
+	}
+
+	json.Unmarshal(b, &data)
+	return data, nil
 }
 
 func GetCurrentWeatherName(weatherCode int) string {

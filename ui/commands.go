@@ -36,6 +36,16 @@ func FetchLocation(optionalProvider *int) tea.Cmd {
 	}
 }
 
+func FetchSunriseAndSunset(l geocoding.LocationInfo) tea.Cmd {
+	return func() tea.Msg {
+		s, err := weather.GetSunriseAndSunset(l)
+		if err != nil {
+			return ErrMsg{err}
+		}
+		return SunriseAndSunset{s}
+	}
+}
+
 func DoTick() tea.Cmd {
 	return tea.Every(time.Second, func(t time.Time) tea.Msg {
 		return TickMsg(t)

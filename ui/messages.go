@@ -16,6 +16,10 @@ type WeatherMsg struct {
 	LocationInfo geocoding.LocationInfo
 }
 
+type SunriseAndSunset struct {
+	weather.SunriseAndSunsetResponse
+}
+
 type ErrMsg struct {
 	Err error
 }

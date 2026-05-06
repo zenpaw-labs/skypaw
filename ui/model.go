@@ -14,9 +14,10 @@ import (
 
 type Model struct {
 	// Weather
-	City     string
-	Weather  weather.WeatherResponse
-	Location geocoding.LocationInfo
+	City             string
+	Weather          weather.WeatherResponse
+	SunriseAndSunset weather.SunriseAndSunsetResponse
+	Location         geocoding.LocationInfo
 
 	// Status
 	CurrentTime    time.Time
@@ -31,15 +32,15 @@ type Model struct {
 
 	// User config
 	optionalProvider *int
-	customCity string
+	customCity       string
 
 	// Other
-	Version          string
+	Version string
 }
 
 func InitialModel(optionalProvider *int, version string, city string) Model {
 	return Model{
-		customCity: city,
+		customCity:       city,
 		optionalProvider: optionalProvider,
 		Version:          version,
 		CurrentTime:      time.Now(),
@@ -64,10 +65,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Location = msg.Data
 		m.IsLoading = 2
 		return m, FetchWeather(m.Location)
+
 	case WeatherMsg:
 		m.Weather = msg.Data
 		m.Location = msg.LocationInfo
+		m.IsLoading = 3
+		return m, FetchSunriseAndSunset(m.Location)
+
+	case SunriseAndSunset:
 		m.IsLoading = 0
+		m.SunriseAndSunset = msg.SunriseAndSunsetResponse
 		return m, DoTick()
 
 	case tea.WindowSizeMsg:
@@ -138,6 +145,26 @@ func (m Model) View() string {
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
 
+	if m.IsLoading == 3 {
+		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "🌇 Loading sunrise and sunset data, please wait.")
+
+		versionStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#000000")).
+			Background(lipgloss.Color("#FFFFFF")).
+			Bold(true).
+			Padding(0, 2)
+
+		versionBlock := versionStyle.Render(m.Version)
+		footer := lipgloss.Place(
+			m.Width,
+			1,
+			lipgloss.Right,
+			lipgloss.Bottom,
+			versionBlock,
+		)
+		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
+	}
+
 	if m.Err != nil {
 		return "❌ Error: " + m.Err.Error()
 	}
@@ -164,14 +191,16 @@ func (m Model) View() string {
 	s := lipgloss.JoinVertical(
 		lipgloss.Center,
 		loc,
-		"",         
-		cleanArt,  
-		"",         
+		"",
+		cleanArt,
+		"",
 		temp,
 		weatherName,
-		"",         
+		"",
 		timeStr,
 		dateStr,
+		m.SunriseAndSunset.Daily.Sunrise[0],
+		m.SunriseAndSunset.Daily.Sunset[0],
 	)
 
 	return lipgloss.Place(
