@@ -108,19 +108,14 @@ func (m Model) View() string {
 
 	if m.IsLoading == 1 {
 		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "📍 Loading location info, please wait.")
-		versionStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#000000")).
-			Background(lipgloss.Color("#FFFFFF")).
-			Bold(true).
-			Padding(0, 2)
+		version := m.renderVersion()
 
-		versionBlock := versionStyle.Render(m.Version)
 		footer := lipgloss.Place(
 			m.Width,
 			1,
 			lipgloss.Right,
 			lipgloss.Bottom,
-			versionBlock,
+			version,
 		)
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
@@ -128,19 +123,14 @@ func (m Model) View() string {
 	if m.IsLoading == 2 {
 		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "⛅ Loading weather info, please wait.")
 
-		versionStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#000000")).
-			Background(lipgloss.Color("#FFFFFF")).
-			Bold(true).
-			Padding(0, 2)
+		version := m.renderVersion()
 
-		versionBlock := versionStyle.Render(m.Version)
 		footer := lipgloss.Place(
 			m.Width,
 			1,
 			lipgloss.Right,
 			lipgloss.Bottom,
-			versionBlock,
+			version,
 		)
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
@@ -148,19 +138,14 @@ func (m Model) View() string {
 	if m.IsLoading == 3 {
 		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "🌇 Loading sunrise and sunset data, please wait.")
 
-		versionStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#000000")).
-			Background(lipgloss.Color("#FFFFFF")).
-			Bold(true).
-			Padding(0, 2)
+		version := m.renderVersion()
 
-		versionBlock := versionStyle.Render(m.Version)
 		footer := lipgloss.Place(
 			m.Width,
 			1,
 			lipgloss.Right,
 			lipgloss.Bottom,
-			versionBlock,
+			version,
 		)
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
@@ -184,30 +169,85 @@ func (m Model) View() string {
 		m.CurrentTime.Month(),
 		m.CurrentTime.Day(),
 	)
+	
 	loc := fmt.Sprintf("📍 %s, %s", m.Location.Admin1, m.Location.Name)
 	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
 	temp := fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
+	sunBar := m.renderSunBar(m.Width)
 
-	s := lipgloss.JoinVertical(
-		lipgloss.Center,
-		loc,
-		"",
-		cleanArt,
-		"",
-		temp,
-		weatherName,
-		"",
-		timeStr,
-		dateStr,
-		m.SunriseAndSunset.Daily.Sunrise[0],
-		m.SunriseAndSunset.Daily.Sunset[0],
-	)
+	mainContent := lipgloss.JoinVertical(
+        lipgloss.Center,
+        loc,
+        "",
+        cleanArt,
+        "",
+        temp,
+        weatherName,
+        "",
+        timeStr,
+        dateStr,
+    )
 
-	return lipgloss.Place(
-		m.Width,
-		m.Height,
+    centeredMain := lipgloss.Place(
+        m.Width,
+        m.Height-3, 
+        lipgloss.Center,
+        lipgloss.Center,
+        mainContent,
+    )
+
+
+    footerContent := lipgloss.NewStyle().
+	Width(m.Width).Align(lipgloss.Center).
+	Render(lipgloss.JoinVertical(
 		lipgloss.Center,
-		lipgloss.Center,
-		s,
-	)
+		sunBar,
+	))
+
+    return lipgloss.JoinVertical(lipgloss.Left, centeredMain, footerContent)
+}
+
+func (m Model) renderVersion() string {
+	versionStyle := lipgloss.NewStyle().
+    	Foreground(lipgloss.Color("#000000")).
+    	Background(lipgloss.Color("#FFFFFF")).
+    	Bold(true).
+    	Padding(0, 1)
+	return versionStyle.Render(m.Version)
+}
+
+func (m Model) renderSunBar(width int) string {
+    progress := m.getSunProgress()
+    barWidth := width / 6
+    
+    filledWidth := int(progress * float64(barWidth))
+    if filledWidth > barWidth { filledWidth = barWidth }
+    
+    filledStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700"))
+    emptyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C"))
+    
+    bar := filledStyle.Render(strings.Repeat("━", filledWidth)) + 
+    emptyStyle.Render(strings.Repeat("━", barWidth-filledWidth))
+          
+    st := m.SunriseAndSunset.Daily.Sunrise[0]
+    et := m.SunriseAndSunset.Daily.Sunset[0]
+    sunriseTime := st[strings.Index(st, "T")+1:]
+    sunsetTime := et[strings.Index(et, "T")+1:]
+
+    labels := fmt.Sprintf("🌅 %s %s 🌇 %s", sunriseTime, bar, sunsetTime)
+    return labels
+}
+
+func (m Model) getSunProgress() float64 {
+    layout := "2006-01-02T15:04"
+    sunrise, _ := time.Parse(layout, m.SunriseAndSunset.Daily.Sunrise[0])
+    sunset, _ := time.Parse(layout, m.SunriseAndSunset.Daily.Sunset[0])
+
+    if m.CurrentTime.Before(sunrise) { return 0.0 }
+    if m.CurrentTime.After(sunset) { return 1.0 }
+
+    totalDuration := sunset.Sub(sunrise).Seconds()
+    elapsedDuration := m.CurrentTime.Sub(sunrise).Seconds()
+
+    return elapsedDuration / totalDuration
 }
