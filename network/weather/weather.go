@@ -130,7 +130,6 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (Weath
 }
 
 func GetSunriseAndSunset(location geocoding.LocationInfo) (SunriseAndSunsetResponse, error) {
-	// TODO: sunrise and sunset data
 /*
 	Request generated according to API of sunrise and sunset of OpenMeteo
 	Docs of Daily weather (including sunset & sunrise): https://open-meteo.com/en/docs#daily_weather_variables

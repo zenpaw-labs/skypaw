@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -154,6 +155,7 @@ func FillLocationInfoFromCoords(l *LocationInfo) {
 }
 
 func LocationDetectByNetwork(optionalProvider *int) (LocationInfo, error) {
+	slog.Info("Detecting location by network with provider:", "provider_id", *optionalProvider)
 	switch *optionalProvider {
 	case 1:
 		return locationDetectByNetworkIpApi()

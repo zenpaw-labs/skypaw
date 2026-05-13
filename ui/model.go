@@ -33,18 +33,20 @@ type Model struct {
 	// User config
 	optionalProvider *int
 	customCity       string
+	hideSunBar bool
 
 	// Other
 	Version string
 }
 
-func InitialModel(optionalProvider *int, version string, city string) Model {
+func InitialModel(optionalProvider *int, version string, city string, hideSunBar bool) Model {
 	return Model{
 		customCity:       city,
 		optionalProvider: optionalProvider,
 		Version:          version,
 		CurrentTime:      time.Now(),
 		IsLoading:        1,
+		hideSunBar: hideSunBar,
 	}
 }
 
@@ -173,38 +175,25 @@ func (m Model) View() string {
 	loc := fmt.Sprintf("📍 %s, %s", m.Location.Admin1, m.Location.Name)
 	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
 	temp := fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
-	sunBar := m.renderSunBar(m.Width)
+	var sunBar string
+	if !m.hideSunBar {
+		sunBar = m.renderSunBar(m.Width)
+	}
 
-	mainContent := lipgloss.JoinVertical(
-        lipgloss.Center,
-        loc,
-        "",
-        cleanArt,
-        "",
-        temp,
-        weatherName,
-        "",
-        timeStr,
-        dateStr,
-    )
+	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", cleanArt, "", temp, weatherName, "", timeStr, dateStr)
+
+    footer := lipgloss.JoinVertical(lipgloss.Center, sunBar)
+    footerHeight := lipgloss.Height(footer) 
 
     centeredMain := lipgloss.Place(
         m.Width,
-        m.Height-3, 
+        m.Height-footerHeight, 
         lipgloss.Center,
         lipgloss.Center,
         mainContent,
     )
 
-
-    footerContent := lipgloss.NewStyle().
-	Width(m.Width).Align(lipgloss.Center).
-	Render(lipgloss.JoinVertical(
-		lipgloss.Center,
-		sunBar,
-	))
-
-    return lipgloss.JoinVertical(lipgloss.Left, centeredMain, footerContent)
+    return lipgloss.JoinVertical(lipgloss.Left, centeredMain, footer)
 }
 
 func (m Model) renderVersion() string {
@@ -218,24 +207,27 @@ func (m Model) renderVersion() string {
 
 func (m Model) renderSunBar(width int) string {
     progress := m.getSunProgress()
-    barWidth := width / 6
     
+    barWidth := width / 6
+    if barWidth < 20 { barWidth = 20 }
+
     filledWidth := int(progress * float64(barWidth))
     if filledWidth > barWidth { filledWidth = barWidth }
-    
-    filledStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700"))
-    emptyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C"))
-    
-    bar := filledStyle.Render(strings.Repeat("━", filledWidth)) + 
-    emptyStyle.Render(strings.Repeat("━", barWidth-filledWidth))
-          
+    if filledWidth < 0 { filledWidth = 0 }
+
+    bar := strings.Repeat("▓", filledWidth) + strings.Repeat("░", barWidth-filledWidth)
+
     st := m.SunriseAndSunset.Daily.Sunrise[0]
     et := m.SunriseAndSunset.Daily.Sunset[0]
     sunriseTime := st[strings.Index(st, "T")+1:]
     sunsetTime := et[strings.Index(et, "T")+1:]
 
-    labels := fmt.Sprintf("🌅 %s %s 🌇 %s", sunriseTime, bar, sunsetTime)
-    return labels
+    content := fmt.Sprintf("%s  %s  %s", sunriseTime, bar, sunsetTime)
+
+    return lipgloss.NewStyle().
+        Width(width).
+        Align(lipgloss.Center).
+        Render(content)
 }
 
 func (m Model) getSunProgress() float64 {

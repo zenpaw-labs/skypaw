@@ -5,14 +5,21 @@ package location_utils
 import (
 	"bytes"
 	"encoding/json"
+	"log/slog"
 	"os/exec"
 
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
 
 func getLocationCoordinates(optionalProvider *int) (geocoding.LocationInfo, error) {
+	if *optionalProvider != -1 {
+		slog.Info("Detecting location on Windows by optional provider (flag)", "provider_id", *optionalProvider)
+		return geocoding.LocationDetectByNetwork(optionalProvider)
+	}
+
 	location, err := locationDetectorByPS()
 	if err != nil || (location.Latitude == 0 && location.Longitude == 0) {
+		slog.Info("Detecting location on Windows by optional provider (PS Error)", "provider_id", *optionalProvider)
 		return geocoding.LocationDetectByNetwork(optionalProvider)
 	}
 	return location, err
