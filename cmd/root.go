@@ -28,7 +28,6 @@ var (
 	config           bool
 	install          bool
 	location             string
-	hideSunBar bool
 )
 
 var rootCmd = &cobra.Command{
@@ -87,7 +86,7 @@ var rootCmd = &cobra.Command{
 			return
 		}
 		
-		p := tea.NewProgram(ui.InitialModel(&optionalProvider, semVersion, location, hideSunBar), tea.WithAltScreen())
+		p := tea.NewProgram(ui.InitialModel(&optionalProvider, semVersion, location), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			panic(err)
 		}
@@ -106,7 +105,7 @@ func init() {
 	// General, User Settings
 	rootCmd.Flags().StringVarP(&location, "location", "l", "", "location to check weather for.")
 	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "p", -1, "select a location detector provider - enter 1 or 2 along with the parameter.")
-	rootCmd.Flags().BoolVarP(&hideSunBar, "no-sunbar", "s", false, "disable sunrise/sunset bar at the bottom of the screen.")
+	// TODO: Single line output 
 
 
 	// Service flags

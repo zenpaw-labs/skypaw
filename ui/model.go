@@ -12,6 +12,8 @@ import (
 	"github.com/zenpaw-labs/skypaw/network/weather"
 )
 
+//TODO: Interactive location picker
+
 type Model struct {
 	// Weather
 	City             string
@@ -39,14 +41,13 @@ type Model struct {
 	Version string
 }
 
-func InitialModel(optionalProvider *int, version string, city string, hideSunBar bool) Model {
+func InitialModel(optionalProvider *int, version string, city string) Model {
 	return Model{
 		customCity:       city,
 		optionalProvider: optionalProvider,
 		Version:          version,
 		CurrentTime:      time.Now(),
 		IsLoading:        1,
-		hideSunBar: hideSunBar,
 	}
 }
 
@@ -111,6 +112,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.String() == "r" {
 			return m, FetchWeather(m.Location)
+		}
+
+		if msg.String() == "s" {
+			if m.hideSunBar {
+				m.hideSunBar = false
+			} else {
+				m.hideSunBar = true
+			} 
+			return m, DoTick()
 		}
 
 	case ErrMsg:
@@ -205,6 +215,7 @@ func (m Model) View() string {
 	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
 	temp := fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
 	var sunBar string
+	// TODO: Replacing sunbar with hourly/daily weather or graph
 	if !m.hideSunBar {
 		sunBar = m.renderSunBar(m.Width)
 	}

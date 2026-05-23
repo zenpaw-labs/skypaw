@@ -12,7 +12,6 @@ import (
 	"github.com/zenpaw-labs/skypaw/network"
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
-
 var (
 	weatherCodes = map[int]string{
 		0:  "Clear Sky",
@@ -102,6 +101,10 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (Weath
 		weatherResponse WeatherResponse
 	)
 	rq := []string{"temperature_2m", "is_day", "weather_code", "wind_speed_10m"}
+	// TODO: Celsius or Fahrenheit 
+	// TODO: Pressure, Wind (with arrow of direction) speed, etc.
+	// TODO: Offline caching weather response
+	// TODO: Notification, if rain/thunderstorm coming.
 	args := strings.Join(rq, ",")
 	values := url.Values{}
 	values.Add("latitude", strconv.FormatFloat(locationInfo.Latitude, 'f', -1, 64))
