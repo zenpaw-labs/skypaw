@@ -48,6 +48,9 @@ var rootCmd = &cobra.Command{
 			}
 			defer closeLogger()
 			slog.Info("Logger initialized successfully")
+		} else {
+    		discardHandler := slog.NewTextHandler(io.Discard, nil)
+    		slog.SetDefault(slog.New(discardHandler))
 		}
 
 		if install {

@@ -58,6 +58,7 @@ func (m Model) Init() tea.Cmd {
 		cmds = append(cmds, FetchLocation(m.optionalProvider))
 	}
 	cmds = append(cmds, DoTick())
+	cmds = append(cmds, DoWeatherRefreshTick())
 	return tea.Batch(cmds...)
 }
 
@@ -65,13 +66,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case GeocodingMsg:
 		m.Location = msg.Data
-		m.IsLoading = 2
+		if m.IsLoading != 0 {
+			m.IsLoading = 2
+		}
 		return m, FetchWeather(m.Location)
 
 	case WeatherMsg:
 		m.Weather = msg.Data
 		m.Location = msg.LocationInfo
-		m.IsLoading = 3
+		if m.IsLoading != 0 {
+			m.IsLoading = 3
+		}
 		return m, FetchSunriseAndSunset(m.Location)
 
 	case SunriseAndSunset:
@@ -79,18 +84,33 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SunriseAndSunset = msg.SunriseAndSunsetResponse
 		return m, DoTick()
 
-	case tea.WindowSizeMsg:
-		m.Width = msg.Width
-		m.Height = msg.Height
-		return m, nil
+
+	case RefreshWeatherMsg:
+		if m.IsLoading != 0 {
+			return m, DoWeatherRefreshTick()
+		}
+
+		return m, tea.Batch(
+			FetchWeather(m.Location),
+			DoWeatherRefreshTick(),
+		)
 
 	case TickMsg:
 		m.CurrentTime = time.Time(msg)
 		return m, DoTick()
 
+	case tea.WindowSizeMsg:
+		m.Width = msg.Width
+		m.Height = msg.Height
+		return m, nil		
+
 	case tea.KeyMsg:
 		if msg.String() == "q" || msg.String() == "ctrl+c" {
 			return m, tea.Quit
+		}
+
+		if msg.String() == "r" {
+			return m, FetchWeather(m.Location)
 		}
 
 	case ErrMsg:
@@ -172,7 +192,16 @@ func (m Model) View() string {
 		m.CurrentTime.Day(),
 	)
 	
-	loc := fmt.Sprintf("📍 %s, %s", m.Location.Admin1, m.Location.Name)
+	var loc string
+
+	if len(m.Location.Admin1) == 0 || m.Location.Admin1 == ""  {
+		loc = fmt.Sprintf("📍 %s", m.Location.Name)
+	} else if len(m.Location.Name) == 0 || m.Location.Name == "" {
+		loc = fmt.Sprintf("📍 %s", m.Location.Admin1)
+	} else {
+		loc = fmt.Sprintf("📍 %s, %s", m.Location.Admin1, m.Location.Name)
+	}
+
 	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
 	temp := fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
 	var sunBar string

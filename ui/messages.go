@@ -25,3 +25,5 @@ type ErrMsg struct {
 }
 
 type TickMsg time.Time
+
+type RefreshWeatherMsg time.Time
