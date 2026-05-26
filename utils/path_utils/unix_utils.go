@@ -5,7 +5,6 @@ package path_utils
 import (
 	"fmt"
 	"os"
-
 )
 
 func addToPath() error {

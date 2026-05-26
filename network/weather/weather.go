@@ -12,6 +12,7 @@ import (
 	"github.com/zenpaw-labs/skypaw/network"
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
+
 var (
 	weatherCodes = map[int]string{
 		0:  "Clear Sky",
@@ -66,8 +67,8 @@ type CurrentWeather struct {
 
 type SunriseAndSunsetResponse struct {
 	/*
-	Struct generated for according to response from OpenMeteo daily weather
-	Learn more: https://open-meteo.com/en/docs#daily_weather_variables
+		Struct generated for according to response from OpenMeteo daily weather
+		Learn more: https://open-meteo.com/en/docs#daily_weather_variables
 	*/
 	Latitude             float64    `json:"latitude"`
 	Longitude            float64    `json:"longitude"`
@@ -93,15 +94,15 @@ type DailyUnits struct {
 }
 
 func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (WeatherResponse, geocoding.LocationInfo, error) {
-/*
-	Requests generated for according to API Scheme of current weather by OpenMeteo
-	Docs of current weather API: https://open-meteo.com/en/docs#current_weather
-*/
+	/*
+		Requests generated for according to API Scheme of current weather by OpenMeteo
+		Docs of current weather API: https://open-meteo.com/en/docs#current_weather
+	*/
 	var (
 		weatherResponse WeatherResponse
 	)
 	rq := []string{"temperature_2m", "is_day", "weather_code", "wind_speed_10m"}
-	// TODO: Celsius or Fahrenheit 
+	// TODO: Celsius or Fahrenheit
 	// TODO: Pressure, Wind (with arrow of direction) speed, etc.
 	// TODO: Offline caching weather response
 	// TODO: Notification, if rain/thunderstorm coming.
@@ -133,10 +134,10 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (Weath
 }
 
 func GetSunriseAndSunset(location geocoding.LocationInfo) (SunriseAndSunsetResponse, error) {
-/*
-	Request generated according to API of sunrise and sunset of OpenMeteo
-	Docs of Daily weather (including sunset & sunrise): https://open-meteo.com/en/docs#daily_weather_variables
-*/
+	/*
+		Request generated according to API of sunrise and sunset of OpenMeteo
+		Docs of Daily weather (including sunset & sunrise): https://open-meteo.com/en/docs#daily_weather_variables
+	*/
 	data := SunriseAndSunsetResponse{}
 	values := url.Values{}
 	values.Add("latitude", strconv.FormatFloat(location.Latitude, 'f', -1, 64))
@@ -144,14 +145,14 @@ func GetSunriseAndSunset(location geocoding.LocationInfo) (SunriseAndSunsetRespo
 	values.Add("daily", "sunrise,sunset")
 	values.Add("timezone", "auto")
 	f := network.WeatherEndpointApi + "forecast?" + values.Encode()
-	
+
 	resp, err := http.Get(f)
 	if err != nil {
 		return data, err
 	}
 	defer resp.Body.Close()
 	b, err := io.ReadAll(resp.Body)
-		if err != nil {
+	if err != nil {
 		return data, err
 	}
 

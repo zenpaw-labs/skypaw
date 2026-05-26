@@ -1,4 +1,5 @@
 package ascii
+
 // TODO: Animation of weather
 const (
 	Clear = `

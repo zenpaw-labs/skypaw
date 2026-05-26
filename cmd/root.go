@@ -27,7 +27,7 @@ var (
 	debugger         bool
 	config           bool
 	install          bool
-	location             string
+	location         string
 )
 
 var rootCmd = &cobra.Command{
@@ -48,8 +48,8 @@ var rootCmd = &cobra.Command{
 			defer closeLogger()
 			slog.Info("Logger initialized successfully")
 		} else {
-    		discardHandler := slog.NewTextHandler(io.Discard, nil)
-    		slog.SetDefault(slog.New(discardHandler))
+			discardHandler := slog.NewTextHandler(io.Discard, nil)
+			slog.SetDefault(slog.New(discardHandler))
 		}
 
 		if install {
@@ -85,7 +85,7 @@ var rootCmd = &cobra.Command{
 			}
 			return
 		}
-		
+
 		p := tea.NewProgram(ui.InitialModel(&optionalProvider, semVersion, location), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			panic(err)
@@ -105,14 +105,13 @@ func init() {
 	// General, User Settings
 	rootCmd.Flags().StringVarP(&location, "location", "l", "", "location to check weather for.")
 	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "p", -1, "select a location detector provider - enter 1 or 2 along with the parameter.")
-	// TODO: Single line output 
-
+	// TODO: Single line output
 
 	// Service flags
 	rootCmd.Flags().BoolVarP(&version, "version", "v", false, "displays current version of the app.")
 	rootCmd.Flags().BoolVarP(&install, "install", "i", false, "adding the app to your path directory to run everywhere.")
 	rootCmd.Flags().BoolVarP(&config, "config", "c", false, "displays path to your config file.")
-	
+
 	// Debug flags
 	rootCmd.Flags().BoolVarP(&profiler, "profiler", "P", false, "enables the profiler of cpu and memory.")
 	rootCmd.Flags().BoolVarP(&debugger, "debugger", "D", false, "enables writing actions to .log file.")
@@ -126,21 +125,21 @@ func initConfig() error {
 func startProfiling() func() {
 	t := time.Now().Format("20060102_150405")
 	p := fmt.Sprintf("SKP_%s", t)
-    path := filepath.Join(utils.GetConfigDir(), "profiler", p)
-    _ = os.MkdirAll(path, 0755) 
+	path := filepath.Join(utils.GetConfigDir(), "profiler", p)
+	_ = os.MkdirAll(path, 0755)
 
-    cpuFile, _ := os.Create(filepath.Join(path, "cpu.prof"))
-    
-    pprof.StartCPUProfile(cpuFile)
+	cpuFile, _ := os.Create(filepath.Join(path, "cpu.prof"))
 
-    return func() {
-        pprof.StopCPUProfile()
-        cpuFile.Close()
-        memFile, _ := os.Create(filepath.Join(path, "mem.prof"))
-        runtime.GC()
+	pprof.StartCPUProfile(cpuFile)
+
+	return func() {
+		pprof.StopCPUProfile()
+		cpuFile.Close()
+		memFile, _ := os.Create(filepath.Join(path, "mem.prof"))
+		runtime.GC()
 		pprof.WriteHeapProfile(memFile)
-        defer memFile.Close()
-    }
+		defer memFile.Close()
+	}
 }
 
 func startLogger() (func(), error) {
@@ -148,29 +147,29 @@ func startLogger() (func(), error) {
 	var closeFn = func() {}
 
 	t := time.Now().Format("20060102_150405")
-    fileName := fmt.Sprintf("SKP_%s.log", t)
-        
-    path := filepath.Join(utils.GetConfigDir(), "debugger")
-        
-    if err := os.MkdirAll(path, 0755); err != nil {
+	fileName := fmt.Sprintf("SKP_%s.log", t)
+
+	path := filepath.Join(utils.GetConfigDir(), "debugger")
+
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create debug directory: %w", err)
-    }
+	}
 
-    logFile, err := os.Create(filepath.Join(path, fileName))
-    if err != nil {
-        return nil, fmt.Errorf("failed to create log file: %w", err)
-    }
+	logFile, err := os.Create(filepath.Join(path, fileName))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create log file: %w", err)
+	}
 
-    logWriter = logFile
-    closeFn = func() {
-        logFile.Close()
-    }
+	logWriter = logFile
+	closeFn = func() {
+		logFile.Close()
+	}
 
-    handler := slog.NewTextHandler(logWriter, &slog.HandlerOptions{
-        Level: slog.LevelDebug,
-    })
+	handler := slog.NewTextHandler(logWriter, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})
 
-    slog.SetDefault(slog.New(handler))
+	slog.SetDefault(slog.New(handler))
 
-    return closeFn, nil
+	return closeFn, nil
 }
