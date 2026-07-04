@@ -17,3 +17,17 @@ func GetConfigDir() string {
 	}
 	return filepath.Join(configDir, "skypaw")
 }
+
+func GetConfigFile() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		configDir = "."
+	}
+	path := filepath.Join(configDir, "skypaw", "config.json")
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", err
+	}
+
+	return path, nil
+}

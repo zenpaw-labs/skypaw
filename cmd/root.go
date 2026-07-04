@@ -117,11 +117,6 @@ func init() {
 	rootCmd.Flags().BoolVarP(&debugger, "debugger", "D", false, "enables writing actions to .log file.")
 }
 
-func initConfig() error {
-	// TODO: Config file
-	return nil
-}
-
 func startProfiling() func() {
 	t := time.Now().Format("20060102_150405")
 	p := fmt.Sprintf("SKP_%s", t)
