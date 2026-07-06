@@ -5,14 +5,15 @@ import (
 
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 	"github.com/zenpaw-labs/skypaw/network/weather"
+	"github.com/zenpaw-labs/skypaw/utils/cfg"
 	"github.com/zenpaw-labs/skypaw/utils/location_utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func FetchWeather(location geocoding.LocationInfo) tea.Cmd {
+func FetchWeather(location geocoding.LocationInfo, units cfg.UnitSystem) tea.Cmd {
 	return func() tea.Msg {
-		res, info, err := weather.GetCurrentWeatherByLocationInfo(location)
+		res, info, err := weather.GetCurrentWeatherByLocationInfo(location, units)
 		if err != nil {
 			return ErrMsg{err}
 		}

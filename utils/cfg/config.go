@@ -1,0 +1,75 @@
+package cfg
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/zenpaw-labs/skypaw/utils"
+)
+
+const (
+	Metric UnitSystem = iota
+	Imperial
+)
+
+type UnitSystem int
+
+type UserConfig struct {
+	UserCity         string     `json:"city"`
+	OptionalProvider int        `json:"provider"`
+	HideSunBar       bool       `json:"hide_sun_bar"`
+	Units            UnitSystem `json:"units"`
+}
+
+func LoadConfig() UserConfig {
+	cfg := UserConfig{}
+	file, err := utils.GetConfigFile()
+	if err != nil {
+		cfg = DefaultConfig()
+		SaveConfig(cfg)
+		return cfg
+	}
+	data, _ := os.ReadFile(file)
+	json.Unmarshal(data, &cfg)
+	return cfg
+}
+
+func SaveConfig(cfg UserConfig) error {
+	data, err := json.MarshalIndent(cfg, "", " ")
+	if err != nil {
+		return err
+	}
+	dir := utils.GetConfigDir()
+	os.MkdirAll(dir, 0755)
+	path := filepath.Join(dir, "config.json")
+	return os.WriteFile(path, data, 0644)
+}
+
+func (c UserConfig) FormatTemp(celsius float64) string {
+	if c.Units == Imperial {
+		f := celsius*9/5 + 32
+		return fmt.Sprintf("%.1f°F", f)
+	}
+	return fmt.Sprintf("%.1f°C", celsius)
+
+}
+
+func ParseUnitSystem(s string) UnitSystem {
+	switch strings.ToLower(s) {
+	case "imperial":
+		return Imperial
+	default:
+		return Metric
+	}
+}
+
+func DefaultConfig() UserConfig {
+	return UserConfig{
+		OptionalProvider: 2,
+		HideSunBar:       false,
+		Units:            Metric,
+	}
+}

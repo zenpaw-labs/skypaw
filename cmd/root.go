@@ -12,6 +12,7 @@ import (
 
 	"github.com/zenpaw-labs/skypaw/network"
 	"github.com/zenpaw-labs/skypaw/utils"
+	"github.com/zenpaw-labs/skypaw/utils/cfg"
 	"github.com/zenpaw-labs/skypaw/utils/path_utils"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -25,9 +26,10 @@ var (
 	version          bool
 	profiler         bool
 	debugger         bool
-	config           bool
+	configLocation   bool
 	install          bool
 	location         string
+	units            string
 )
 
 var rootCmd = &cobra.Command{
@@ -64,7 +66,7 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
-		if config {
+		if configLocation {
 			path := utils.GetConfigDir()
 			fmt.Println(path)
 			return
@@ -85,8 +87,8 @@ var rootCmd = &cobra.Command{
 			}
 			return
 		}
-
-		p := tea.NewProgram(ui.InitialModel(&optionalProvider, semVersion, location), tea.WithAltScreen())
+		userCfg := InitConfig()
+		p := tea.NewProgram(ui.InitialModel(userCfg, semVersion), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			panic(err)
 		}
@@ -100,17 +102,33 @@ func Execute() {
 	}
 }
 
+func InitConfig() cfg.UserConfig {
+	userCfg := cfg.LoadConfig()
+	if len(location) > 0 {
+		userCfg.UserCity = location
+	}
+
+	if optionalProvider != -1 {
+		userCfg.OptionalProvider = optionalProvider
+	}
+
+	userCfg.Units = cfg.ParseUnitSystem(units)
+
+	return userCfg
+}
+
 func init() {
 	cobra.MousetrapHelpText = ""
 	// General, User Settings
 	rootCmd.Flags().StringVarP(&location, "location", "l", "", "location to check weather for.")
 	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "p", -1, "select a location detector provider - enter 1 or 2 along with the parameter.")
+	rootCmd.Flags().StringVarP(&units, "units", "u", "metric", "measure units: metric or imperial")
 	// TODO: Single line output
 
 	// Service flags
 	rootCmd.Flags().BoolVarP(&version, "version", "v", false, "displays current version of the app.")
 	rootCmd.Flags().BoolVarP(&install, "install", "i", false, "adding the app to your path directory to run everywhere.")
-	rootCmd.Flags().BoolVarP(&config, "config", "c", false, "displays path to your config file.")
+	rootCmd.Flags().BoolVarP(&configLocation, "config", "c", false, "displays path to your config file.")
 
 	// Debug flags
 	rootCmd.Flags().BoolVarP(&profiler, "profiler", "P", false, "enables the profiler of cpu and memory.")

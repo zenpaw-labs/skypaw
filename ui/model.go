@@ -10,6 +10,7 @@ import (
 	"github.com/zenpaw-labs/skypaw/ascii"
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 	"github.com/zenpaw-labs/skypaw/network/weather"
+	"github.com/zenpaw-labs/skypaw/utils/cfg"
 )
 
 //TODO: Interactive location picker
@@ -33,30 +34,27 @@ type Model struct {
 	Height int
 
 	// User config
-	optionalProvider *int
-	customCity       string
-	hideSunBar       bool
+	Config cfg.UserConfig
 
 	// Other
 	Version string
 }
 
-func InitialModel(optionalProvider *int, version string, city string) Model {
+func InitialModel(cfg cfg.UserConfig, version string) Model {
 	return Model{
-		customCity:       city,
-		optionalProvider: optionalProvider,
-		Version:          version,
-		CurrentTime:      time.Now(),
-		IsLoading:        1,
+		Config:      cfg,
+		Version:     version,
+		CurrentTime: time.Now(),
+		IsLoading:   1,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
 	var cmds []tea.Cmd
-	if m.customCity != "" {
-		cmds = append(cmds, FetchLocationByName(m.customCity))
+	if m.Config.UserCity != "" {
+		cmds = append(cmds, FetchLocationByName(m.Config.UserCity))
 	} else {
-		cmds = append(cmds, FetchLocation(m.optionalProvider))
+		cmds = append(cmds, FetchLocation(&m.Config.OptionalProvider))
 	}
 	cmds = append(cmds, DoTick())
 	cmds = append(cmds, DoWeatherRefreshTick())
@@ -70,7 +68,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.IsLoading != 0 {
 			m.IsLoading = 2
 		}
-		return m, FetchWeather(m.Location)
+		return m, FetchWeather(m.Location, m.Config.Units)
 
 	case WeatherMsg:
 		m.Weather = msg.Data
@@ -91,7 +89,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		return m, tea.Batch(
-			FetchWeather(m.Location),
+			FetchWeather(m.Location, m.Config.Units),
 			DoWeatherRefreshTick(),
 		)
 
@@ -110,15 +108,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.String() == "r" {
-			return m, FetchWeather(m.Location)
+			return m, FetchWeather(m.Location, m.Config.Units)
 		}
 
 		if msg.String() == "s" {
-			if m.hideSunBar {
-				m.hideSunBar = false
-			} else {
-				m.hideSunBar = true
-			}
+			m.Config.HideSunBar = !m.Config.HideSunBar
 			return m, DoTick()
 		}
 
@@ -212,10 +206,11 @@ func (m Model) View() string {
 	}
 
 	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
-	temp := fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
+
+	temp := m.Config.FormatTemp(m.Weather.CurrentWeather.Temperature2m)
 	var sunBar string
 	// TODO: Replacing sunbar with hourly/daily weather or graph
-	if !m.hideSunBar {
+	if !m.Config.HideSunBar {
 		sunBar = m.renderSunBar(m.Width)
 	}
 

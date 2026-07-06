@@ -11,6 +11,7 @@ import (
 
 	"github.com/zenpaw-labs/skypaw/network"
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
+	"github.com/zenpaw-labs/skypaw/utils/cfg"
 )
 
 var (
@@ -93,7 +94,7 @@ type DailyUnits struct {
 	Sunset  string `json:"sunset"`
 }
 
-func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (WeatherResponse, geocoding.LocationInfo, error) {
+func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSystem cfg.UnitSystem) (WeatherResponse, geocoding.LocationInfo, error) {
 	/*
 		Requests generated for according to API Scheme of current weather by OpenMeteo
 		Docs of current weather API: https://open-meteo.com/en/docs#current_weather
@@ -102,7 +103,6 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo) (Weath
 		weatherResponse WeatherResponse
 	)
 	rq := []string{"temperature_2m", "is_day", "weather_code", "wind_speed_10m"}
-	// TODO: Celsius or Fahrenheit
 	// TODO: Pressure, Wind (with arrow of direction) speed, etc.
 	// TODO: Offline caching weather response
 	// TODO: Notification, if rain/thunderstorm coming.
