@@ -1,11 +1,10 @@
 package ascii
 
 // TODO: Animation of weather
-// TODO: When is night display the moon
 const (
 	Clear = `
       \ | /
-     - ( ) -
+    -- ( ) --
       / | \
 `
 
@@ -117,6 +116,7 @@ const (
 
 func GetCurrentWeatherArt(weatherCode int) string {
 	switch weatherCode {
+
 	case 0, 1:
 		return Clear
 	case 2:

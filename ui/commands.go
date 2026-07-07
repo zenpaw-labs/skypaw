@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
@@ -15,7 +16,7 @@ func FetchWeather(location geocoding.LocationInfo, units cfg.UnitSystem) tea.Cmd
 	return func() tea.Msg {
 		res, info, err := weather.GetCurrentWeatherByLocationInfo(location, units)
 		if err != nil {
-			return ErrMsg{err}
+			return ErrMsg{fmt.Errorf("weather error: %w", err)}
 		}
 		return WeatherMsg{Data: res, LocationInfo: info}
 	}
@@ -31,7 +32,7 @@ func FetchLocation(optionalProvider *int) tea.Cmd {
 	return func() tea.Msg {
 		l, err := location_utils.GetLocation(optionalProvider)
 		if err != nil {
-			return ErrMsg{err}
+			return ErrMsg{fmt.Errorf("location error: %w", err)}
 		}
 		return GeocodingMsg{l}
 	}
@@ -41,7 +42,7 @@ func FetchSunriseAndSunset(l geocoding.LocationInfo) tea.Cmd {
 	return func() tea.Msg {
 		s, err := weather.GetSunriseAndSunset(l)
 		if err != nil {
-			return ErrMsg{err}
+			return ErrMsg{fmt.Errorf("sunrise/sunset error: %w", err)}
 		}
 		return SunriseAndSunset{s}
 	}

@@ -113,6 +113,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.String() == "s" {
 			m.Config.HideSunBar = !m.Config.HideSunBar
+			cfg.SaveConfig(m.Config)
 			return m, DoTick()
 		}
 
