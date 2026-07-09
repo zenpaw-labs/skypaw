@@ -121,7 +121,7 @@ func init() {
 	cobra.MousetrapHelpText = ""
 	// General, User Settings
 	rootCmd.Flags().StringVarP(&location, "location", "l", "", "location to check weather for.")
-	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "p", -1, "select a location detector provider - enter 1 or 2 along with the parameter.")
+	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "p", -1, "select a location detector provider: enter 1 for ipwho, 2 for ipapi and 3 for ipinfo.")
 	rootCmd.Flags().StringVarP(&units, "units", "u", "metric", "measure units: metric or imperial")
 	// TODO: Single line output
 

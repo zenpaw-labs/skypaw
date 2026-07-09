@@ -3,6 +3,7 @@ package cfg
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,11 +12,11 @@ import (
 )
 
 const (
-	Metric UnitSystem = iota
-	Imperial
+	Metric   UnitSystem = "Metric"
+	Imperial UnitSystem = "Imperial"
 )
 
-type UnitSystem int
+type UnitSystem string
 
 type UserConfig struct {
 	UserCity                      string     `json:"city"`
@@ -40,6 +41,7 @@ func LoadConfig() UserConfig {
 	data, _ := os.ReadFile(file)
 	json.Unmarshal(data, &cfg)
 	SaveConfig(cfg)
+	slog.Info("Loaded config", "config", cfg)
 	return cfg
 }
 
@@ -74,7 +76,7 @@ func ParseUnitSystem(s string) UnitSystem {
 
 func DefaultConfig() UserConfig {
 	return UserConfig{
-		OptionalLocationProvider:      2,
+		OptionalLocationProvider:      3,
 		WindowsLocalLocationDetection: true,
 		HideSunBar:                    false,
 		Units:                         Metric,

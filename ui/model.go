@@ -56,7 +56,7 @@ func (m Model) Init() tea.Cmd {
 	if m.Config.UserCity != "" {
 		cmds = append(cmds, FetchLocationByName(m.Config.UserCity))
 	} else {
-		cmds = append(cmds, FetchLocation(&m.Config.OptionalLocationProvider, m.Config.WindowsLocalLocationDetection))
+		cmds = append(cmds, FetchLocation(m.Config, m.Config.WindowsLocalLocationDetection))
 	}
 	cmds = append(cmds, DoTick())
 	cmds = append(cmds, DoWeatherRefreshTick())
@@ -220,12 +220,12 @@ func (m Model) View() string {
 
 	var loc string
 
-	if len(m.Location.Admin1) == 0 || m.Location.Admin1 == "" {
-		loc = fmt.Sprintf("📍 %s", m.Location.Name)
-	} else if len(m.Location.Name) == 0 || m.Location.Name == "" {
-		loc = fmt.Sprintf("📍 %s", m.Location.Admin1)
+	if len(m.Location.Region) == 0 || m.Location.Region == "" {
+		loc = fmt.Sprintf("📍 %s", m.Location.City)
+	} else if len(m.Location.City) == 0 || m.Location.City == "" {
+		loc = fmt.Sprintf("📍 %s", m.Location.Region)
 	} else {
-		loc = fmt.Sprintf("📍 %s, %s", m.Location.Admin1, m.Location.Name)
+		loc = fmt.Sprintf("📍 %s, %s", m.Location.Region, m.Location.City)
 	}
 
 	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)

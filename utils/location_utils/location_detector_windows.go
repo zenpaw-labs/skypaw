@@ -9,18 +9,19 @@ import (
 	"os/exec"
 
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
+	"github.com/zenpaw-labs/skypaw/utils/cfg"
 )
 
-func getLocationCoordinates(optionalProvider *int, winLocalDetect bool) (geocoding.LocationInfo, error) {
+func getLocationCoordinates(config cfg.UserConfig, winLocalDetect bool) (geocoding.LocationInfo, error) {
 	if !winLocalDetect {
-		slog.Info("Detecting location on Windows by optional provider (flag)", "provider_id", *optionalProvider)
-		return geocoding.LocationDetectByNetwork(optionalProvider)
+		slog.Info("Detecting location on Windows by optional provider (flag)", "provider_id", config.OptionalLocationProvider)
+		return geocoding.LocationDetectByNetwork(config)
 	}
 
 	location, err := locationDetectorByPS()
 	if err != nil || (location.Latitude == 0 && location.Longitude == 0) {
-		slog.Info("Detecting location on Windows by optional provider (PS Error)", "provider_id", *optionalProvider)
-		return geocoding.LocationDetectByNetwork(optionalProvider)
+		slog.Info("Detecting location on Windows by optional provider (PS Error)", "provider_id", config.OptionalLocationProvider)
+		return geocoding.LocationDetectByNetwork(config)
 	}
 	return location, err
 }

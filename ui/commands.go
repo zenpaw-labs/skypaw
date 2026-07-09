@@ -28,9 +28,9 @@ func FetchLocationByName(location string) tea.Cmd {
 	}
 }
 
-func FetchLocation(optionalProvider *int, l bool) tea.Cmd {
+func FetchLocation(config cfg.UserConfig, winDetect bool) tea.Cmd {
 	return func() tea.Msg {
-		l, err := location_utils.GetLocation(optionalProvider, l)
+		l, err := location_utils.GetLocation(config, winDetect)
 		if err != nil {
 			return ErrMsg{fmt.Errorf("location error: %w", err)}
 		}
