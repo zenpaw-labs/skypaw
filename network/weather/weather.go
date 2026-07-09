@@ -2,7 +2,6 @@ package weather
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -115,14 +114,12 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 
 	resp, err := http.Get(fullUrl)
 	if err != nil {
-		fmt.Println("An error occurred: ", err, ".")
 		return weatherResponse, locationInfo, err
 	}
 	defer resp.Body.Close()
 
 	bodyResp, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("An error occurred: ", err, ".")
 		return weatherResponse, locationInfo, err
 	}
 

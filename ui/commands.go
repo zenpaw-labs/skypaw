@@ -28,9 +28,9 @@ func FetchLocationByName(location string) tea.Cmd {
 	}
 }
 
-func FetchLocation(optionalProvider *int) tea.Cmd {
+func FetchLocation(optionalProvider *int, l bool) tea.Cmd {
 	return func() tea.Msg {
-		l, err := location_utils.GetLocation(optionalProvider)
+		l, err := location_utils.GetLocation(optionalProvider, l)
 		if err != nil {
 			return ErrMsg{fmt.Errorf("location error: %w", err)}
 		}

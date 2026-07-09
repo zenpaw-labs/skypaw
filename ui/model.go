@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -54,7 +56,7 @@ func (m Model) Init() tea.Cmd {
 	if m.Config.UserCity != "" {
 		cmds = append(cmds, FetchLocationByName(m.Config.UserCity))
 	} else {
-		cmds = append(cmds, FetchLocation(&m.Config.OptionalProvider))
+		cmds = append(cmds, FetchLocation(&m.Config.OptionalLocationProvider, m.Config.WindowsLocalLocationDetection))
 	}
 	cmds = append(cmds, DoTick())
 	cmds = append(cmds, DoWeatherRefreshTick())
@@ -108,6 +110,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.String() == "r" {
+			if m.Err != nil {
+				m.IsLoading = 2
+			}
+			m.Err = nil
 			return m, FetchWeather(m.Location, m.Config.Units)
 		}
 
@@ -118,8 +124,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case ErrMsg:
-		m.Err = msg.Err
 		m.IsLoading = -1
+		var netErr net.Error
+		if errors.As(msg.Err, &netErr) {
+			if netErr.Timeout() {
+				m.Err = fmt.Errorf("Network timeout.")
+			} else {
+				m.Err = fmt.Errorf("You're offline.")
+			}
+		} else {
+			m.Err = msg.Err
+		}
+
 		return m, nil
 	}
 
@@ -128,8 +144,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 
-	if m.Err != nil {
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "❌ Error: "+m.Err.Error())
+	if m.Err != nil || m.IsLoading == -1 {
+		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.Err.Error())
+		version := m.renderVersion()
+
+		footer := lipgloss.Place(
+			m.Width,
+			1,
+			lipgloss.Right,
+			lipgloss.Bottom,
+			version,
+		)
+		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
 
 	if m.IsLoading == 1 {
@@ -174,10 +200,6 @@ func (m Model) View() string {
 			version,
 		)
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
-	}
-
-	if m.Err != nil {
-		return "❌ Error: " + m.Err.Error()
 	}
 
 	weatherArt := ascii.GetCurrentWeatherArt(m.Weather.CurrentWeather.WeatherCode)

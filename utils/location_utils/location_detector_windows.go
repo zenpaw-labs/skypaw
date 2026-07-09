@@ -11,8 +11,8 @@ import (
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 )
 
-func getLocationCoordinates(optionalProvider *int) (geocoding.LocationInfo, error) {
-	if *optionalProvider != -1 {
+func getLocationCoordinates(optionalProvider *int, winLocalDetect bool) (geocoding.LocationInfo, error) {
+	if !winLocalDetect {
 		slog.Info("Detecting location on Windows by optional provider (flag)", "provider_id", *optionalProvider)
 		return geocoding.LocationDetectByNetwork(optionalProvider)
 	}

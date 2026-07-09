@@ -86,6 +86,11 @@ type BigDataResponse struct {
 	PrincipalSubdivision string `json:"principalSubdivision"`
 }
 
+type LocationProvider interface {
+	URL() string
+	Parse(data []byte) (LocationInfo, error)
+}
+
 func SearchLocation(name string) LocationInfo {
 	/*
 		Request generated according to Geocoding API of OpenMeteo.
@@ -126,6 +131,7 @@ func SearchLocation(name string) LocationInfo {
 }
 
 func FillLocationInfoFromCoords(l *LocationInfo) {
+	// Used for PowerShell to fill geodata
 	v := url.Values{}
 	v.Add("latitude", strconv.FormatFloat(l.Latitude, 'f', -1, 64))
 	v.Add("longitude", strconv.FormatFloat(l.Longitude, 'f', -1, 64))

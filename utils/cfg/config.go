@@ -18,14 +18,19 @@ const (
 type UnitSystem int
 
 type UserConfig struct {
-	UserCity         string     `json:"city"`
-	OptionalProvider int        `json:"provider"`
-	HideSunBar       bool       `json:"hide_sun_bar"`
-	Units            UnitSystem `json:"units"`
+	UserCity                      string     `json:"city"`
+	OptionalLocationProvider      int        `json:"location_provider_id"`
+	WindowsLocalLocationDetection bool       `json:"windows_local_location_detection"`
+	HideSunBar                    bool       `json:"hide_sun_bar"`
+	Units                         UnitSystem `json:"units"`
+	// TODO: Hints
+	ShowHints bool `json:"show_hints"`
+	// TODO: Colorful terminal
+	ColorfulTUI bool `json:"colorful_tui"`
 }
 
 func LoadConfig() UserConfig {
-	cfg := UserConfig{}
+	cfg := DefaultConfig()
 	file, err := utils.GetConfigFile()
 	if err != nil {
 		cfg = DefaultConfig()
@@ -34,6 +39,7 @@ func LoadConfig() UserConfig {
 	}
 	data, _ := os.ReadFile(file)
 	json.Unmarshal(data, &cfg)
+	SaveConfig(cfg)
 	return cfg
 }
 
@@ -68,8 +74,10 @@ func ParseUnitSystem(s string) UnitSystem {
 
 func DefaultConfig() UserConfig {
 	return UserConfig{
-		OptionalProvider: 2,
-		HideSunBar:       false,
-		Units:            Metric,
+		OptionalLocationProvider:      2,
+		WindowsLocalLocationDetection: true,
+		HideSunBar:                    false,
+		Units:                         Metric,
+		ShowHints:                     false,
 	}
 }

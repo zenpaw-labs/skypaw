@@ -109,7 +109,7 @@ func InitConfig() cfg.UserConfig {
 	}
 
 	if optionalProvider != -1 {
-		userCfg.OptionalProvider = optionalProvider
+		userCfg.OptionalLocationProvider = optionalProvider
 	}
 
 	userCfg.Units = cfg.ParseUnitSystem(units)
