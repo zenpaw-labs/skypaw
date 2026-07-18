@@ -18,12 +18,19 @@ const (
 
 type UnitSystem string
 
+const (
+	MaxHoursBefore = 24
+	MaxHoursAfter  = 48
+)
+
 type UserConfig struct {
 	UserCity                      string     `json:"city"`
 	OptionalLocationProvider      int        `json:"location_provider_id"`
 	WindowsLocalLocationDetection bool       `json:"windows_local_location_detection"`
 	HideSunBar                    bool       `json:"hide_sun_bar"`
 	Units                         UnitSystem `json:"units"`
+	DiagramHoursBefore            int        `json:"diagram_hours_before"`
+	DiagramHoursAfter             int        `json:"diagram_hours_after"`
 	// TODO: Hints
 	ShowHints bool `json:"show_hints"`
 	// TODO: Colorful terminal
@@ -41,6 +48,7 @@ func LoadConfig() UserConfig {
 	data, _ := os.ReadFile(file)
 	json.Unmarshal(data, &cfg)
 	SaveConfig(cfg)
+	cfg.Validate()
 	slog.Info("Loaded config", "config", cfg)
 	return cfg
 }
@@ -80,6 +88,20 @@ func DefaultConfig() UserConfig {
 		WindowsLocalLocationDetection: true,
 		HideSunBar:                    false,
 		Units:                         Metric,
-		ShowHints:                     false,
+		ShowHints:                     true,
+		ColorfulTUI:                   true,
+		DiagramHoursBefore:            2,
+		DiagramHoursAfter:             6,
+	}
+}
+
+func (c *UserConfig) Validate() {
+	example := DefaultConfig()
+	if c.DiagramHoursAfter < 0 || c.DiagramHoursAfter > MaxHoursAfter {
+		c.DiagramHoursAfter = example.DiagramHoursAfter
+	}
+
+	if c.DiagramHoursBefore < 0 || c.DiagramHoursBefore > MaxHoursBefore {
+		c.DiagramHoursBefore = example.DiagramHoursBefore
 	}
 }

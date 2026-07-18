@@ -22,6 +22,26 @@ func FetchWeather(location geocoding.LocationInfo, units cfg.UnitSystem) tea.Cmd
 	}
 }
 
+func FetchSunriseAndSunset(l geocoding.LocationInfo) tea.Cmd {
+	return func() tea.Msg {
+		s, err := weather.GetSunriseAndSunset(l)
+		if err != nil {
+			return ErrMsg{fmt.Errorf("sunrise/sunset error: %w", err)}
+		}
+		return SunriseAndSunsetMsg{s}
+	}
+}
+
+func FetchHourlyWeather(l geocoding.LocationInfo) tea.Cmd {
+	return func() tea.Msg {
+		h, err := weather.GetHourlyWeather(l)
+		if err != nil {
+			return ErrMsg{fmt.Errorf("hourly weather error: %w", err)}
+		}
+		return HourlyWeatherMsg{h}
+	}
+}
+
 func FetchLocationByName(location string) tea.Cmd {
 	return func() tea.Msg {
 		return GeocodingMsg{Data: geocoding.SearchLocation(location)}
@@ -35,16 +55,6 @@ func FetchLocation(config cfg.UserConfig, winDetect bool) tea.Cmd {
 			return ErrMsg{fmt.Errorf("location error: %w", err)}
 		}
 		return GeocodingMsg{l}
-	}
-}
-
-func FetchSunriseAndSunset(l geocoding.LocationInfo) tea.Cmd {
-	return func() tea.Msg {
-		s, err := weather.GetSunriseAndSunset(l)
-		if err != nil {
-			return ErrMsg{fmt.Errorf("sunrise/sunset error: %w", err)}
-		}
-		return SunriseAndSunset{s}
 	}
 }
 

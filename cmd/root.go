@@ -30,6 +30,8 @@ var (
 	install          bool
 	location         string
 	units            string
+	hoursAfter       int
+	hoursBefore      int
 )
 
 var rootCmd = &cobra.Command{
@@ -123,6 +125,8 @@ func init() {
 	rootCmd.Flags().StringVarP(&location, "location", "l", "", "location to check weather for.")
 	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "p", -1, "select a location detector provider: enter 1 for ipwho, 2 for ipapi and 3 for ipinfo.")
 	rootCmd.Flags().StringVarP(&units, "units", "u", "metric", "measure units: metric or imperial")
+	rootCmd.Flags().IntVar(&hoursBefore, "hours-before", 2, "hours of past data on temperature graph")
+	rootCmd.Flags().IntVar(&hoursAfter, "hours-after", 6, "hours of future data on temperature graph")
 	// TODO: Single line output
 
 	// Service flags

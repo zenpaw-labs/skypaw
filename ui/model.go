@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/zenpaw-labs/skypaw/ascii"
@@ -17,11 +18,21 @@ import (
 
 //TODO: Interactive location picker
 
+const (
+	LoadingError     = -1
+	LoadingCompleted = 0
+	LoadingLocation  = 1
+	LoadingWeather   = 2
+	LoadingSunrise   = 3
+	LoadingHourly    = 4
+)
+
 type Model struct {
 	// Weather
 	City             string
 	Weather          weather.WeatherResponse
 	SunriseAndSunset weather.SunriseAndSunsetResponse
+	Hourly           weather.HourlyWeatherResponse
 	Location         geocoding.LocationInfo
 
 	// Status
@@ -30,6 +41,7 @@ type Model struct {
 	CurrentMonth   time.Month
 	IsLoading      int
 	Err            error
+	spinner        spinner.Model
 
 	// Window
 	Width  int
@@ -43,11 +55,15 @@ type Model struct {
 }
 
 func InitialModel(cfg cfg.UserConfig, version string) Model {
+	s := spinner.New()
+	s.Spinner = spinner.MiniDot
+
 	return Model{
 		Config:      cfg,
 		Version:     version,
 		CurrentTime: time.Now(),
-		IsLoading:   1,
+		IsLoading:   LoadingLocation,
+		spinner:     s,
 	}
 }
 
@@ -60,6 +76,7 @@ func (m Model) Init() tea.Cmd {
 	}
 	cmds = append(cmds, DoTick())
 	cmds = append(cmds, DoWeatherRefreshTick())
+	cmds = append(cmds, m.spinner.Tick)
 	return tea.Batch(cmds...)
 }
 
@@ -67,37 +84,50 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case GeocodingMsg:
 		m.Location = msg.Data
-		if m.IsLoading != 0 {
-			m.IsLoading = 2
+		if m.IsLoading != LoadingCompleted {
+			m.IsLoading = LoadingWeather
 		}
 		return m, FetchWeather(m.Location, m.Config.Units)
 
 	case WeatherMsg:
 		m.Weather = msg.Data
 		m.Location = msg.LocationInfo
-		if m.IsLoading != 0 {
-			m.IsLoading = 3
+		if m.IsLoading != LoadingCompleted {
+			m.IsLoading = LoadingHourly
+		}
+		return m, FetchHourlyWeather(m.Location)
+
+	case HourlyWeatherMsg:
+		m.Hourly = msg.HourlyWeatherResponse
+		if m.IsLoading != LoadingCompleted {
+			m.IsLoading = LoadingSunrise
 		}
 		return m, FetchSunriseAndSunset(m.Location)
 
-	case SunriseAndSunset:
-		m.IsLoading = 0
+	case SunriseAndSunsetMsg:
+		m.IsLoading = LoadingCompleted
 		m.SunriseAndSunset = msg.SunriseAndSunsetResponse
 		return m, DoTick()
 
 	case RefreshWeatherMsg:
-		if m.IsLoading != 0 {
+		if m.IsLoading != LoadingCompleted {
 			return m, DoWeatherRefreshTick()
 		}
 
 		return m, tea.Batch(
 			FetchWeather(m.Location, m.Config.Units),
+			FetchHourlyWeather(m.Location),
 			DoWeatherRefreshTick(),
 		)
 
 	case TickMsg:
 		m.CurrentTime = time.Time(msg)
 		return m, DoTick()
+
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
@@ -110,10 +140,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.String() == "r" {
-			if m.Err != nil {
-				m.IsLoading = 2
-			}
 			m.Err = nil
+
+			if m.Location.City == "" && m.Location.Region == "" {
+				m.IsLoading = LoadingLocation
+				if m.Config.UserCity != "" {
+					return m, FetchLocationByName(m.Config.UserCity)
+				}
+				return m, FetchLocation(m.Config, m.Config.WindowsLocalLocationDetection)
+			}
+			m.IsLoading = LoadingWeather
 			return m, FetchWeather(m.Location, m.Config.Units)
 		}
 
@@ -124,7 +160,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case ErrMsg:
-		m.IsLoading = -1
+		m.IsLoading = LoadingError
 		var netErr net.Error
 		if errors.As(msg.Err, &netErr) {
 			if netErr.Timeout() {
@@ -144,61 +180,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 
-	if m.Err != nil || m.IsLoading == -1 {
-		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.Err.Error())
-		version := m.renderVersion()
+	loadingText := map[int]string{
+		LoadingLocation: "📍 Detecting location",
+		LoadingWeather:  "⛅ Fetching weather",
+		LoadingHourly:   "🕐 Loading hourly data",
+		LoadingSunrise:  "🌇 Loading sunrise data",
+	}
 
-		footer := lipgloss.Place(
-			m.Width,
-			1,
-			lipgloss.Right,
-			lipgloss.Bottom,
-			version,
-		)
+	if m.IsLoading == LoadingError || m.Err != nil {
+		content := fmt.Sprintf("%s", m.Err.Error())
+		version := m.renderVersion()
+		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, content)
+		footer := lipgloss.Place(m.Width, 1, lipgloss.Right, lipgloss.Bottom, version)
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
 
-	if m.IsLoading == 1 {
-		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "📍 Loading location info, please wait.")
-		version := m.renderVersion()
-
-		footer := lipgloss.Place(
-			m.Width,
-			1,
-			lipgloss.Right,
-			lipgloss.Bottom,
-			version,
-		)
-		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
-	}
-
-	if m.IsLoading == 2 {
-		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "⛅ Loading weather info, please wait.")
+	if m.IsLoading != LoadingCompleted && m.IsLoading != LoadingError {
+		text := loadingText[m.IsLoading]
+		content := fmt.Sprintf("%s %s", m.spinner.View(), text)
 
 		version := m.renderVersion()
-
-		footer := lipgloss.Place(
-			m.Width,
-			1,
-			lipgloss.Right,
-			lipgloss.Bottom,
-			version,
-		)
-		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
-	}
-
-	if m.IsLoading == 3 {
-		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "🌇 Loading sunrise and sunset data, please wait.")
-
-		version := m.renderVersion()
-
-		footer := lipgloss.Place(
-			m.Width,
-			1,
-			lipgloss.Right,
-			lipgloss.Bottom,
-			version,
-		)
+		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, content)
+		footer := lipgloss.Place(m.Width, 1, lipgloss.Right, lipgloss.Bottom, version)
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
 
@@ -253,6 +256,10 @@ func (m Model) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, centeredMain, footer)
 }
 
+func (m Model) renderHourlyTemperature() string {
+	return ""
+}
+
 func (m Model) renderVersion() string {
 	versionStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#000000")).
@@ -263,6 +270,10 @@ func (m Model) renderVersion() string {
 }
 
 func (m Model) renderSunBar(width int) string {
+	if len(m.SunriseAndSunset.Daily.Sunrise) == 0 ||
+		len(m.SunriseAndSunset.Daily.Sunset) == 0 {
+		return ""
+	}
 	progress := m.getSunProgress()
 
 	barWidth := width / 6
@@ -294,6 +305,10 @@ func (m Model) renderSunBar(width int) string {
 }
 
 func (m Model) getSunProgress() float64 {
+	if len(m.SunriseAndSunset.Daily.Sunrise) == 0 ||
+		len(m.SunriseAndSunset.Daily.Sunset) == 0 {
+		return 0.0
+	}
 	layout := "2006-01-02T15:04"
 	sunrise, _ := time.Parse(layout, m.SunriseAndSunset.Daily.Sunrise[0])
 	sunset, _ := time.Parse(layout, m.SunriseAndSunset.Daily.Sunset[0])

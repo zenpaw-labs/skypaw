@@ -16,8 +16,12 @@ type WeatherMsg struct {
 	LocationInfo geocoding.LocationInfo
 }
 
-type SunriseAndSunset struct {
+type SunriseAndSunsetMsg struct {
 	weather.SunriseAndSunsetResponse
+}
+
+type HourlyWeatherMsg struct {
+	weather.HourlyWeatherResponse
 }
 
 type ErrMsg struct {

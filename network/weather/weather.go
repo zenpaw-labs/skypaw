@@ -65,6 +65,13 @@ type CurrentWeather struct {
 	IsDay         int     `json:"is_day"`
 }
 
+type HourlyWeatherResponse struct {
+	Hourly struct {
+		Time          []string  `json:"time"`
+		Temperature2m []float64 `json:"temperature_2m"`
+	} `json:"hourly"`
+}
+
 type SunriseAndSunsetResponse struct {
 	/*
 		Struct generated for according to response from OpenMeteo daily weather
@@ -128,6 +135,36 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 		return weatherResponse, locationInfo, err
 	}
 	return weatherResponse, locationInfo, nil
+}
+
+func GetHourlyWeather(location geocoding.LocationInfo) (HourlyWeatherResponse, error) {
+	h := []string{"temperature_2m"}
+	values := url.Values{}
+	values.Add("latitude", strconv.FormatFloat(location.Latitude, 'f', -1, 64))
+	values.Add("longitude", strconv.FormatFloat(location.Longitude, 'f', -1, 64))
+	args := strings.Join(h, ",")
+	values.Add("hourly", args)
+	values.Add("past_days", "1")
+	values.Add("forecast_days", "2")
+
+	fullUrl := network.WeatherEndpointApi + "forecast?" + values.Encode()
+	resp, err := http.Get(fullUrl)
+	wtr := HourlyWeatherResponse{}
+	if err != nil {
+		return wtr, err
+	}
+	defer resp.Body.Close()
+
+	bodyResponse, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return wtr, err
+	}
+
+	err = json.Unmarshal(bodyResponse, &wtr)
+	if err != nil {
+		return wtr, err
+	}
+	return wtr, nil
 }
 
 func GetSunriseAndSunset(location geocoding.LocationInfo) (SunriseAndSunsetResponse, error) {
