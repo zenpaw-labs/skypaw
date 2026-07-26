@@ -206,19 +206,60 @@ func (m Model) View() string {
 
 	weatherArt := GetCurrentWeatherArt(m.Weather.CurrentWeather.WeatherCode)
 
-	var cleanArtLines []string
-	for _, line := range strings.Split(strings.TrimSpace(weatherArt.Art), "\n") {
-		cleanArtLines = append(cleanArtLines, strings.TrimSpace(line))
-	}
-	cleanArt := strings.Join(cleanArtLines, "\n")
-	var art lipgloss.Style
+	rawArt := strings.Trim(weatherArt.Art, "\n\r")
+	lines := strings.Split(rawArt, "\n")
 
+	minSpaces := -1
+	for _, line := range lines {
+		line = strings.TrimRight(line, "\r ")
+		if len(line) == 0 {
+			continue
+		}
+		leading := len(line) - len(strings.TrimLeft(line, " "))
+		if minSpaces == -1 || leading < minSpaces {
+			minSpaces = leading
+		}
+	}
+	if minSpaces == -1 {
+		minSpaces = 0
+	}
+
+	var croppedLines []string
+	artWidth := 0
+	for _, line := range lines {
+		line = strings.TrimRight(line, "\r ")
+		if len(line) >= minSpaces {
+			cropped := line[minSpaces:]
+			croppedLines = append(croppedLines, cropped)
+
+			w := lipgloss.Width(cropped)
+			if w > artWidth {
+				artWidth = w
+			}
+		} else {
+			croppedLines = append(croppedLines, "")
+		}
+	}
+
+	for i, line := range croppedLines {
+		w := lipgloss.Width(line)
+		if w < artWidth {
+			croppedLines[i] = line + strings.Repeat(" ", artWidth-w)
+		}
+	}
+
+	cleanRectArt := strings.Join(croppedLines, "\n")
+
+	artStyle := lipgloss.NewStyle().
+		Width(artWidth).
+		Align(lipgloss.Left)
+
+	var art string
 	if m.Config.ColorfulTUI {
-		art = lipgloss.NewStyle().Foreground(weatherArt.Color).Render(cleanArt)
+		art = artStyle.Foreground(weatherArt.Color).Render(cleanRectArt)
 	} else {
-		art = lipgloss.NewStyle().Render(cleanArt)
+		art = artStyle.Render(cleanRectArt)
 	}
-
 	timeStr := m.CurrentTime.Format("15:04:05")
 	dateStr := fmt.Sprintf(
 		"%s, %s %d",
