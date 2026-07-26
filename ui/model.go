@@ -10,7 +10,6 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/zenpaw-labs/skypaw/ascii"
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 	"github.com/zenpaw-labs/skypaw/network/weather"
 	"github.com/zenpaw-labs/skypaw/utils/cfg"
@@ -205,13 +204,20 @@ func (m Model) View() string {
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
 
-	weatherArt := ascii.GetCurrentWeatherArt(m.Weather.CurrentWeather.WeatherCode)
+	weatherArt := GetCurrentWeatherArt(m.Weather.CurrentWeather.WeatherCode)
 
 	var cleanArtLines []string
-	for _, line := range strings.Split(strings.TrimSpace(weatherArt), "\n") {
+	for _, line := range strings.Split(strings.TrimSpace(weatherArt.Art), "\n") {
 		cleanArtLines = append(cleanArtLines, strings.TrimSpace(line))
 	}
 	cleanArt := strings.Join(cleanArtLines, "\n")
+	var art lipgloss.Style
+
+	if m.Config.ColorfulTUI {
+		art = lipgloss.NewStyle().Foreground(weatherArt.Color).Render(cleanArt)
+	} else {
+		art = lipgloss.NewStyle().Render(cleanArt)
+	}
 
 	timeStr := m.CurrentTime.Format("15:04:05")
 	dateStr := fmt.Sprintf(
@@ -240,7 +246,7 @@ func (m Model) View() string {
 		sunBar = m.renderSunBar(m.Width)
 	}
 
-	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", cleanArt, "", temp, weatherName, "", timeStr, dateStr)
+	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr)
 
 	footer := lipgloss.JoinVertical(lipgloss.Center, sunBar)
 	footerHeight := lipgloss.Height(footer)

@@ -1,4 +1,8 @@
-package ascii
+package ui
+
+import (
+	"github.com/charmbracelet/lipgloss"
+)
 
 // TODO: Animation of weather
 const (
@@ -114,38 +118,88 @@ const (
 `
 )
 
-func GetCurrentWeatherArt(weatherCode int) string {
+type WeatherArt struct {
+	Art   string
+	Color lipgloss.Color
+}
+
+func GetCurrentWeatherArt(weatherCode int) WeatherArt {
 	switch weatherCode {
 
 	case 0, 1:
-		return Clear
+		return WeatherArt{
+			Art:   Clear,
+			Color: ColorWeatherClear,
+		}
 	case 2:
-		return PartlyCloudy
+		return WeatherArt{
+			Art:   PartlyCloudy,
+			Color: ColorWeatherPartlyCloudy,
+		}
 	case 3:
-		return Overcast
+		return WeatherArt{
+			Art:   Overcast,
+			Color: ColorWeatherOvercast,
+		}
 	case 45, 48:
-		return Fog
+		return WeatherArt{
+			Art:   Fog,
+			Color: ColorWeatherFog,
+		}
 	case 51, 53, 55:
-		return Drizzle
+		return WeatherArt{
+			Art:   Drizzle,
+			Color: ColorWeatherDrizzle,
+		}
 	case 56, 57:
-		return FreezingDrizzle
+		return WeatherArt{
+			Art:   FreezingDrizzle,
+			Color: ColorWeatherFreezingDrizzle,
+		}
 	case 61, 63, 65:
-		return Rain
+		return WeatherArt{
+			Art:   Rain,
+			Color: ColorWeatherRain,
+		}
 	case 66, 67:
-		return FreezingRain
+		return WeatherArt{
+			Art:   FreezingRain,
+			Color: ColorWeatherFreezingRain,
+		}
 	case 71, 73, 75:
-		return Snowfall
+		return WeatherArt{
+			Art:   Snowfall,
+			Color: ColorWeatherSnowfall,
+		}
 	case 77:
-		return SnowGrains
+		return WeatherArt{
+			Art:   SnowGrains,
+			Color: ColorWeatherSnowGrains,
+		}
 	case 80, 81, 82:
-		return RainShowers
+		return WeatherArt{
+			Art:   RainShowers,
+			Color: ColorWeatherRainShowers,
+		}
 	case 85, 86:
-		return SnowShowers
+		return WeatherArt{
+			Art:   SnowShowers,
+			Color: ColorWeatherSnowShowers,
+		}
 	case 95:
-		return Thunderstorm
+		return WeatherArt{
+			Art:   Thunderstorm,
+			Color: ColorWeatherThunderstorm,
+		}
 	case 96, 99:
-		return ThunderstormHail
+		return WeatherArt{
+			Art:   ThunderstormHail,
+			Color: ColorWeatherThunderstormHail,
+		}
 	default:
-		return Unknown
+		return WeatherArt{
+			Art:   Unknown,
+			Color: ColorWeatherUnknown,
+		}
 	}
 }
