@@ -163,9 +163,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var netErr net.Error
 		if errors.As(msg.Err, &netErr) {
 			if netErr.Timeout() {
-				m.Err = fmt.Errorf("Network timeout.")
+				if m.Config.ColorfulTUI {
+					t := "Network timeout."
+					ts := lipgloss.NewStyle().Foreground(ColorOfflineOrTimeout)
+					t = ts.Render(t)
+					m.Err = fmt.Errorf("%s", t)
+				}
 			} else {
-				m.Err = fmt.Errorf("You're offline.")
+				t := "You're offline."
+				if m.Config.ColorfulTUI {
+					ts := lipgloss.NewStyle().Foreground(ColorOfflineOrTimeout)
+					t = ts.Render(t)
+				}
+				m.Err = fmt.Errorf("%s", t)
 			}
 		} else {
 			m.Err = msg.Err
@@ -187,7 +197,13 @@ func (m Model) View() string {
 	}
 
 	if m.IsLoading == LoadingError || m.Err != nil {
-		content := fmt.Sprintf("%s", m.Err.Error())
+		var content string
+		if m.Config.ColorfulTUI {
+			s := lipgloss.NewStyle().Foreground(ColorError)
+			content = fmt.Sprintf("%s", s.Render(m.Err.Error()))
+		} else {
+			content = fmt.Sprintf("%s", m.Err.Error())
+		}
 		version := m.renderVersion()
 		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, content)
 		footer := lipgloss.Place(m.Width, 1, lipgloss.Right, lipgloss.Bottom, version)
@@ -196,6 +212,11 @@ func (m Model) View() string {
 
 	if m.IsLoading != LoadingCompleted && m.IsLoading != LoadingError {
 		text := loadingText[m.IsLoading]
+		if m.Config.ColorfulTUI {
+			textStyle := lipgloss.NewStyle().Foreground(ColorLoading)
+			text = textStyle.Render(text)
+		}
+
 		content := fmt.Sprintf("%s %s", m.spinner.View(), text)
 
 		version := m.renderVersion()
@@ -250,16 +271,6 @@ func (m Model) View() string {
 
 	cleanRectArt := strings.Join(croppedLines, "\n")
 
-	artStyle := lipgloss.NewStyle().
-		Width(artWidth).
-		Align(lipgloss.Left)
-
-	var art string
-	if m.Config.ColorfulTUI {
-		art = artStyle.Foreground(weatherArt.Color).Render(cleanRectArt)
-	} else {
-		art = artStyle.Render(cleanRectArt)
-	}
 	timeStr := m.CurrentTime.Format("15:04:05")
 	dateStr := fmt.Sprintf(
 		"%s, %s %d",
@@ -285,6 +296,29 @@ func (m Model) View() string {
 	// TODO: Replacing sunbar with hourly/daily weather or graph
 	if !m.Config.HideSunBar {
 		sunBar = m.renderSunBar(m.Width)
+	}
+
+	var art string
+	artStyle := lipgloss.NewStyle().
+		Width(artWidth).
+		Align(lipgloss.Left)
+	if m.Config.ColorfulTUI {
+
+		locStyle := lipgloss.NewStyle().Foreground(ColorLocation)
+		tempStyle := lipgloss.NewStyle().Foreground(ColorTemp)
+		weatherNameStyle := lipgloss.NewStyle().Foreground(ColorWeatherName)
+		timeStyle := lipgloss.NewStyle().Foreground(ColorTime)
+		dateStyle := lipgloss.NewStyle().Foreground(ColorDate)
+
+		loc = locStyle.Render(loc)
+		temp = tempStyle.Render(temp)
+		weatherName = weatherNameStyle.Render(weatherName)
+		timeStr = timeStyle.Render(timeStr)
+		dateStr = dateStyle.Render(dateStr)
+
+		art = artStyle.Foreground(weatherArt.Color).Render(cleanRectArt)
+	} else {
+		art = artStyle.Render(cleanRectArt)
 	}
 
 	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr)

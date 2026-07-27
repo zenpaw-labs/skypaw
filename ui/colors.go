@@ -3,6 +3,17 @@ package ui
 import "github.com/charmbracelet/lipgloss"
 
 const (
+	// Ui colors
+	ColorLocation         = lipgloss.Color("#40E0D0")
+	ColorTemp             = lipgloss.Color("#FFD700")
+	ColorWeatherName      = lipgloss.Color("#DA70D6")
+	ColorTime             = lipgloss.Color("#5FFFD7")
+	ColorDate             = lipgloss.Color("#98FB98")
+	ColorError            = lipgloss.Color("#ff0000")
+	ColorLoading          = lipgloss.Color("#ff7ad7")
+	ColorOfflineOrTimeout = lipgloss.Color("#333434")
+
+	// Weather colors
 	ColorWeatherClear            = lipgloss.Color("#FFD700")
 	ColorWeatherPartlyCloudy     = lipgloss.Color("#B0C4DE")
 	ColorWeatherOvercast         = lipgloss.Color("#778899")

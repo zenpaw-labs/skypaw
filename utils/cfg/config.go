@@ -32,8 +32,7 @@ type UserConfig struct {
 	DiagramHoursBefore            int        `json:"diagram_hours_before"`
 	DiagramHoursAfter             int        `json:"diagram_hours_after"`
 	// TODO: Hints
-	ShowHints bool `json:"show_hints"`
-	// TODO: Colorful terminal
+	ShowHints   bool `json:"show_hints"`
 	ColorfulTUI bool `json:"colorful_tui"`
 }
 
