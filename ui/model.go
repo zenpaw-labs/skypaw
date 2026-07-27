@@ -343,7 +343,7 @@ func (m Model) renderSunBar(width int) string {
 	sunriseTime := st[strings.Index(st, "T")+1:]
 	sunsetTime := et[strings.Index(et, "T")+1:]
 
-	content := fmt.Sprintf("%s  %s  %s", sunriseTime, bar, sunsetTime)
+	content := fmt.Sprintf("🔆 %s  %s  %s 🌒", sunriseTime, bar, sunsetTime)
 
 	return lipgloss.NewStyle().
 		Width(width).
