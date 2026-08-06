@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/guptarohit/asciigraph"
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 	"github.com/zenpaw-labs/skypaw/network/weather"
 	"github.com/zenpaw-labs/skypaw/utils/cfg"
@@ -156,6 +157,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Config.HideSunBar = !m.Config.HideSunBar
 			cfg.SaveConfig(m.Config)
 			return m, DoTick()
+		}
+
+		if msg.String() == "h" {
+			if m.Config.ShowHints {
+				m.Config.ShowHints = false
+			} else {
+				m.Config.ShowHints = true
+			}
+			cfg.SaveConfig(m.Config)
 		}
 
 	case ErrMsg:
@@ -321,7 +331,15 @@ func (m Model) View() string {
 		art = artStyle.Render(cleanRectArt)
 	}
 
-	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr)
+	var hints string
+	if m.Config.ShowHints {
+		hints = "\nPress 'Q' or Ctrl+C for exit.\nTo show / hide sunbar press 'S'.\nTo hide this message press 'H'."
+		hintsStyle := lipgloss.NewStyle().Foreground(ColorHints)
+		hints = hintsStyle.Render(hints)
+
+	}
+
+	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr, hints)
 
 	footer := lipgloss.JoinVertical(lipgloss.Center, sunBar)
 	footerHeight := lipgloss.Height(footer)
@@ -338,7 +356,8 @@ func (m Model) View() string {
 }
 
 func (m Model) renderHourlyTemperature() string {
-	return ""
+	graph := asciigraph.Plot(m.Hourly.Hourly.Temperature2m)
+	return graph
 }
 
 func (m Model) renderVersion() string {

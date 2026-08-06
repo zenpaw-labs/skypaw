@@ -31,9 +31,8 @@ type UserConfig struct {
 	Units                         UnitSystem `json:"units"`
 	DiagramHoursBefore            int        `json:"diagram_hours_before"`
 	DiagramHoursAfter             int        `json:"diagram_hours_after"`
-	// TODO: Hints
-	ShowHints   bool `json:"show_hints"`
-	ColorfulTUI bool `json:"colorful_tui"`
+	ShowHints                     bool       `json:"show_hints"`
+	ColorfulTUI                   bool       `json:"colorful_tui"`
 }
 
 func LoadConfig() UserConfig {
