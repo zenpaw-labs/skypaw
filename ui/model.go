@@ -3,10 +3,12 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"strings"
 	"time"
 
+	"charm.land/log/v2"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -19,12 +21,17 @@ import (
 //TODO: Interactive location picker
 
 const (
+	// Loading
 	LoadingError     = -1
 	LoadingCompleted = 0
 	LoadingLocation  = 1
 	LoadingWeather   = 2
 	LoadingSunrise   = 3
 	LoadingHourly    = 4
+
+	// Logging
+	diagram = "Diagram"
+	model   = "Model"
 )
 
 type Model struct {
@@ -99,6 +106,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case HourlyWeatherMsg:
 		m.Hourly = msg.HourlyWeatherResponse
+
+		if err := convertToLocalTime(&m.Hourly); err != nil {
+			log.Error("Failed to convert hourly time", "err", err)
+		}
+
 		if m.IsLoading != LoadingCompleted {
 			m.IsLoading = LoadingSunrise
 		}
@@ -154,7 +166,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.String() == "s" {
-			m.Config.HideSunBar = !m.Config.HideSunBar
+			m.Config.HideDiagram = !m.Config.HideDiagram
 			cfg.SaveConfig(m.Config)
 			return m, DoTick()
 		}
@@ -190,7 +202,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.Err = msg.Err
 		}
-
+		log.Error(m.Err)
 		return m, nil
 	}
 
@@ -304,8 +316,8 @@ func (m Model) View() string {
 	temp := m.Config.FormatTemp(m.Weather.CurrentWeather.Temperature2m)
 	var sunBar string
 	// TODO: Replacing sunbar with hourly/daily weather or graph
-	if !m.Config.HideSunBar {
-		sunBar = m.renderSunBar(m.Width)
+	if !m.Config.HideDiagram {
+		sunBar = m.renderHourlyTemperature()
 	}
 
 	var art string
@@ -333,7 +345,7 @@ func (m Model) View() string {
 
 	var hints string
 	if m.Config.ShowHints {
-		hints = "\nPress 'Q' or Ctrl+C for exit.\nTo show / hide sunbar press 'S'.\nTo hide this message press 'H'."
+		hints = "\nPress 'Q' or Ctrl+C for exit.\nTo show / hide diagram press 'S'.\nTo hide this message press 'H'."
 		hintsStyle := lipgloss.NewStyle().Foreground(ColorHints)
 		hints = hintsStyle.Render(hints)
 
@@ -356,8 +368,51 @@ func (m Model) View() string {
 }
 
 func (m Model) renderHourlyTemperature() string {
-	graph := asciigraph.Plot(m.Hourly.Hourly.Temperature2m)
-	return graph
+	if len(m.Hourly.Hourly.Temperature2m) == 0 {
+		return ""
+	}
+
+	slicedTemps, slicedTimes := getDiagramSlices(
+		m.Hourly.Hourly.Temperature2m,
+		m.Hourly.Hourly.Time,
+		getLocalHourIndex(m.Hourly.Hourly.Time),
+		m.Config.DiagramHoursBefore,
+		m.Config.DiagramHoursAfter,
+	)
+
+	if len(slicedTemps) == 0 {
+		return ""
+	}
+
+	height := 5
+	width := m.Width / 2
+	if width < 10 {
+		width = 10
+	}
+
+	xAxisFormatter := func(v float64) string {
+		idx := int(math.Round(v))
+		if idx >= 0 && idx < len(slicedTimes) {
+			if t, err := time.Parse("2006-01-02T15:04", slicedTimes[idx]); err == nil {
+				return t.Format("15:04")
+			}
+		}
+		return ""
+	}
+
+	graph := asciigraph.Plot(
+		slicedTemps,
+		asciigraph.Width(width),
+		asciigraph.Height(height),
+		asciigraph.XAxisRange(0, float64(len(slicedTemps)-1)),
+		asciigraph.XAxisValueFormatter(xAxisFormatter),
+	)
+
+	return lipgloss.PlaceHorizontal(
+		m.Width,
+		lipgloss.Center,
+		padLinesToEqualWidth(graph),
+	)
 }
 
 func (m Model) renderVersion() string {
@@ -369,59 +424,87 @@ func (m Model) renderVersion() string {
 	return versionStyle.Render(m.Version)
 }
 
-func (m Model) renderSunBar(width int) string {
-	if len(m.SunriseAndSunset.Daily.Sunrise) == 0 ||
-		len(m.SunriseAndSunset.Daily.Sunset) == 0 {
-		return ""
+func convertToLocalTime(resp *weather.HourlyWeatherResponse) error {
+	layout := "2006-01-02T15:04"
+	for i, timeStr := range resp.Hourly.Time {
+		utcTime, err := time.ParseInLocation(layout, timeStr, time.UTC)
+		if err != nil {
+			return fmt.Errorf("failed to parse time %s at index %d: %w", timeStr, i, err)
+		}
+
+		resp.Hourly.Time[i] = utcTime.Local().Format(layout)
 	}
-	progress := m.getSunProgress()
-
-	barWidth := width / 6
-	if barWidth < 20 {
-		barWidth = 20
-	}
-
-	filledWidth := int(progress * float64(barWidth))
-	if filledWidth > barWidth {
-		filledWidth = barWidth
-	}
-	if filledWidth < 0 {
-		filledWidth = 0
-	}
-
-	bar := strings.Repeat("▓", filledWidth) + strings.Repeat("░", barWidth-filledWidth)
-
-	st := m.SunriseAndSunset.Daily.Sunrise[0]
-	et := m.SunriseAndSunset.Daily.Sunset[0]
-	sunriseTime := st[strings.Index(st, "T")+1:]
-	sunsetTime := et[strings.Index(et, "T")+1:]
-
-	content := fmt.Sprintf("🔆 %s  %s  %s 🌒", sunriseTime, bar, sunsetTime)
-
-	return lipgloss.NewStyle().
-		Width(width).
-		Align(lipgloss.Center).
-		Render(content)
+	return nil
 }
 
-func (m Model) getSunProgress() float64 {
-	if len(m.SunriseAndSunset.Daily.Sunrise) == 0 ||
-		len(m.SunriseAndSunset.Daily.Sunset) == 0 {
-		return 0.0
-	}
-	layout := "2006-01-02T15:04"
-	sunrise, _ := time.Parse(layout, m.SunriseAndSunset.Daily.Sunrise[0])
-	sunset, _ := time.Parse(layout, m.SunriseAndSunset.Daily.Sunset[0])
+func getLocalHourIndex(times []string) int {
+	now := time.Now().Truncate(time.Hour)
 
-	if m.CurrentTime.Before(sunrise) {
-		return 0.0
-	}
-	if m.CurrentTime.After(sunset) {
-		return 1.0
+	layout := "2006-01-02T15:00"
+
+	target := now.Format(layout)
+
+	for i, t := range times {
+		if t == target {
+			return i
+		}
 	}
 
-	totalDuration := sunset.Sub(sunrise).Seconds()
-	elapsedDuration := m.CurrentTime.Sub(sunrise).Seconds()
+	return -1
+}
 
-	return elapsedDuration / totalDuration
+func getDiagramSlices(
+	temps []float64,
+	times []string,
+	hourIndex int,
+	hoursBefore int,
+	hoursAfter int,
+) ([]float64, []string) {
+	totalLen := len(temps)
+
+	if totalLen == 0 || hourIndex < 0 || hourIndex >= totalLen {
+		return nil, nil
+	}
+
+	start := hourIndex - hoursBefore
+	if start < 0 {
+		start = 0
+	}
+
+	end := hourIndex + hoursAfter + 1
+	if end > totalLen {
+		end = totalLen
+	}
+
+	if start >= end {
+		return nil, nil
+	}
+
+	slicedTemps := make([]float64, end-start)
+	copy(slicedTemps, temps[start:end])
+
+	slicedTimes := make([]string, end-start)
+	copy(slicedTimes, times[start:end])
+
+	return slicedTemps, slicedTimes
+}
+
+func padLinesToEqualWidth(s string) string {
+	lines := strings.Split(s, "\n")
+	maxWidth := 0
+
+	for _, line := range lines {
+		if w := lipgloss.Width(line); w > maxWidth {
+			maxWidth = w
+		}
+	}
+
+	for i, line := range lines {
+		w := lipgloss.Width(line)
+		if w < maxWidth {
+			lines[i] = line + strings.Repeat(" ", maxWidth-w)
+		}
+	}
+
+	return strings.Join(lines, "\n")
 }

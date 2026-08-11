@@ -8,9 +8,14 @@ import (
 	"strconv"
 	"strings"
 
+	"charm.land/log/v2"
 	"github.com/zenpaw-labs/skypaw/network"
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 	"github.com/zenpaw-labs/skypaw/utils/cfg"
+)
+
+const (
+	weatherUrl = "weather_url"
 )
 
 var (
@@ -109,7 +114,7 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 		weatherResponse WeatherResponse
 	)
 	rq := []string{"temperature_2m", "is_day", "weather_code", "wind_speed_10m"}
-	// TODO: Pressure, Wind (with arrow of direction) speed, etc.
+	// TODO: Pressure, Wind (with arrow of direction) speed, "feels like", humidityHourly.
 	// TODO: Offline caching weather response
 	// TODO: Notification, if rain/thunderstorm coming.
 	args := strings.Join(rq, ",")
@@ -118,6 +123,7 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 	values.Add("longitude", strconv.FormatFloat(locationInfo.Longitude, 'f', -1, 64))
 	values.Add("current", args)
 	fullUrl := network.WeatherEndpointApi + "forecast?" + values.Encode()
+	log.Debug("Current weather URL", weatherUrl, fullUrl)
 
 	resp, err := http.Get(fullUrl)
 	if err != nil {
@@ -148,6 +154,7 @@ func GetHourlyWeather(location geocoding.LocationInfo) (HourlyWeatherResponse, e
 	values.Add("forecast_days", "2")
 
 	fullUrl := network.WeatherEndpointApi + "forecast?" + values.Encode()
+	log.Debug("Hourly weather URL", weatherUrl, fullUrl)
 	resp, err := http.Get(fullUrl)
 	wtr := HourlyWeatherResponse{}
 	if err != nil {
@@ -179,6 +186,7 @@ func GetSunriseAndSunset(location geocoding.LocationInfo) (SunriseAndSunsetRespo
 	values.Add("daily", "sunrise,sunset")
 	values.Add("timezone", "auto")
 	f := network.WeatherEndpointApi + "forecast?" + values.Encode()
+	log.Debug("Sunset & Sunrise weather URL", weatherUrl, f)
 
 	resp, err := http.Get(f)
 	if err != nil {

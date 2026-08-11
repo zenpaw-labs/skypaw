@@ -3,7 +3,9 @@ package cfg
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
+
+	"charm.land/log/v2"
+
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,12 +29,13 @@ type UserConfig struct {
 	UserCity                      string     `json:"city"`
 	OptionalLocationProvider      int        `json:"location_provider_id"`
 	WindowsLocalLocationDetection bool       `json:"windows_local_location_detection"`
-	HideSunBar                    bool       `json:"hide_sun_bar"`
+	HideDiagram                   bool       `json:"hide_diagram`
 	Units                         UnitSystem `json:"units"`
 	DiagramHoursBefore            int        `json:"diagram_hours_before"`
 	DiagramHoursAfter             int        `json:"diagram_hours_after"`
 	ShowHints                     bool       `json:"show_hints"`
 	ColorfulTUI                   bool       `json:"colorful_tui"`
+	AlwaysRunDebugger             bool       `json:"alwaysRunDebugger"`
 }
 
 func LoadConfig() UserConfig {
@@ -41,13 +44,14 @@ func LoadConfig() UserConfig {
 	if err != nil {
 		cfg = DefaultConfig()
 		SaveConfig(cfg)
+		log.Debug("Default config used and created successfully.", "config", cfg)
 		return cfg
 	}
 	data, _ := os.ReadFile(file)
 	json.Unmarshal(data, &cfg)
 	SaveConfig(cfg)
 	cfg.Validate()
-	slog.Info("Loaded config", "config", cfg)
+	log.Debug("Config loaded successfully.", "config", cfg)
 	return cfg
 }
 

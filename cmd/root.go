@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -15,6 +14,7 @@ import (
 	"github.com/zenpaw-labs/skypaw/utils/cfg"
 	"github.com/zenpaw-labs/skypaw/utils/path_utils"
 
+	"charm.land/log/v2"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/zenpaw-labs/skypaw/ui"
@@ -50,10 +50,9 @@ var rootCmd = &cobra.Command{
 				fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
 			}
 			defer closeLogger()
-			slog.Info("Logger initialized successfully")
+			log.Info("Logger initialized successfully")
 		} else {
-			discardHandler := slog.NewTextHandler(io.Discard, nil)
-			slog.SetDefault(slog.New(discardHandler))
+			log.SetOutput(io.Discard)
 		}
 
 		if install {
@@ -160,9 +159,6 @@ func startProfiling() func() {
 }
 
 func startLogger() (func(), error) {
-	var logWriter io.Writer = io.Discard
-	var closeFn = func() {}
-
 	t := time.Now().Format("20060102_150405")
 	fileName := fmt.Sprintf("SKP_%s.log", t)
 
@@ -177,16 +173,14 @@ func startLogger() (func(), error) {
 		return nil, fmt.Errorf("failed to create log file: %w", err)
 	}
 
-	logWriter = logFile
-	closeFn = func() {
+	log.SetOutput(logFile)
+	log.SetLevel(log.DebugLevel)
+	log.SetReportTimestamp(true)
+	log.SetFormatter(log.LogfmtFormatter)
+
+	closeFn := func() {
 		logFile.Close()
 	}
-
-	handler := slog.NewTextHandler(logWriter, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})
-
-	slog.SetDefault(slog.New(handler))
 
 	return closeFn, nil
 }

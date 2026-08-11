@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
+	"charm.land/log/v2"
 	"github.com/zenpaw-labs/skypaw/network"
 	"github.com/zenpaw-labs/skypaw/utils/cfg"
 )
@@ -169,7 +169,7 @@ func FillLocationInfoFromCoords(l *LocationInfo) {
 }
 
 func LocationDetectByNetwork(config cfg.UserConfig) (LocationInfo, error) {
-	slog.Info("Detecting location by network with provider:", "provider_id", config.OptionalLocationProvider)
+	log.Info("Detecting location by network with provider:", "provider_id", config.OptionalLocationProvider)
 	var provider LocationProvider
 
 	switch config.OptionalLocationProvider {
