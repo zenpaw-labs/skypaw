@@ -384,8 +384,12 @@ func (m Model) renderHourlyTemperature() string {
 		return ""
 	}
 
-	height := 5
-	width := m.Width / 2
+	height := 3
+
+	width := m.Width / 3
+	if width > 30 {
+		width = 30
+	}
 	if width < 10 {
 		width = 10
 	}
@@ -399,13 +403,14 @@ func (m Model) renderHourlyTemperature() string {
 		}
 		return ""
 	}
-
+	// TODO: C of F
 	graph := asciigraph.Plot(
 		slicedTemps,
 		asciigraph.Width(width),
 		asciigraph.Height(height),
 		asciigraph.XAxisRange(0, float64(len(slicedTemps)-1)),
 		asciigraph.XAxisValueFormatter(xAxisFormatter),
+		asciigraph.Precision(0),
 	)
 
 	return lipgloss.PlaceHorizontal(

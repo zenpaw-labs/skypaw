@@ -88,7 +88,7 @@ func DefaultConfig() UserConfig {
 	return UserConfig{
 		OptionalLocationProvider:      3,
 		WindowsLocalLocationDetection: true,
-		HideSunBar:                    false,
+		HideDiagram:                   false,
 		Units:                         Metric,
 		ShowHints:                     true,
 		ColorfulTUI:                   true,
