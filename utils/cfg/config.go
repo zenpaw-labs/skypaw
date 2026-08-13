@@ -29,7 +29,7 @@ type UserConfig struct {
 	UserCity                      string     `json:"city"`
 	OptionalLocationProvider      int        `json:"location_provider_id"`
 	WindowsLocalLocationDetection bool       `json:"windows_local_location_detection"`
-	HideDiagram                   bool       `json:"hide_diagram`
+	HideDiagram                   bool       `json:"hide_diagram"`
 	Units                         UnitSystem `json:"units"`
 	DiagramHoursBefore            int        `json:"diagram_hours_before"`
 	DiagramHoursAfter             int        `json:"diagram_hours_after"`
@@ -99,6 +99,9 @@ func DefaultConfig() UserConfig {
 
 func (c *UserConfig) Validate() {
 	example := DefaultConfig()
+
+	c.Units = ParseUnitSystem(string(c.Units))
+
 	if c.DiagramHoursAfter < 0 || c.DiagramHoursAfter > MaxHoursAfter {
 		c.DiagramHoursAfter = example.DiagramHoursAfter
 	}

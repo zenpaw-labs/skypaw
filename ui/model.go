@@ -102,7 +102,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.IsLoading != LoadingCompleted {
 			m.IsLoading = LoadingHourly
 		}
-		return m, FetchHourlyWeather(m.Location)
+		return m, FetchHourlyWeather(m.Location, m.Config.Units)
 
 	case HourlyWeatherMsg:
 		m.Hourly = msg.HourlyWeatherResponse
@@ -128,7 +128,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, tea.Batch(
 			FetchWeather(m.Location, m.Config.Units),
-			FetchHourlyWeather(m.Location),
+			FetchHourlyWeather(m.Location, m.Config.Units),
 			DoWeatherRefreshTick(),
 		)
 
@@ -313,11 +313,16 @@ func (m Model) View() string {
 
 	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
 
-	temp := m.Config.FormatTemp(m.Weather.CurrentWeather.Temperature2m)
-	var sunBar string
-	// TODO: Replacing sunbar with hourly/daily weather or graph
+	var temp string
+	if m.Config.Units == cfg.Imperial {
+		temp = fmt.Sprintf("%.1f°F", m.Weather.CurrentWeather.Temperature2m)
+	} else {
+		temp = fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
+	}
+	var diagram string
+
 	if !m.Config.HideDiagram {
-		sunBar = m.renderHourlyTemperature()
+		diagram = m.renderHourlyTemperature()
 	}
 
 	var art string
@@ -353,7 +358,7 @@ func (m Model) View() string {
 
 	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr, hints)
 
-	footer := lipgloss.JoinVertical(lipgloss.Center, sunBar)
+	footer := lipgloss.JoinVertical(lipgloss.Center, diagram)
 	footerHeight := lipgloss.Height(footer)
 
 	centeredMain := lipgloss.Place(
@@ -403,7 +408,6 @@ func (m Model) renderHourlyTemperature() string {
 		}
 		return ""
 	}
-	// TODO: C of F
 	graph := asciigraph.Plot(
 		slicedTemps,
 		asciigraph.Width(width),

@@ -15,7 +15,7 @@ func GetConfigDir() string {
 	if err != nil {
 		configDir = "."
 	}
-	return filepath.Join(configDir, "skypaw")
+	return filepath.Join(configDir, "Zenpaw Labs", "skypaw")
 }
 
 func GetConfigFile() (string, error) {
@@ -23,7 +23,7 @@ func GetConfigFile() (string, error) {
 	if err != nil {
 		configDir = "."
 	}
-	path := filepath.Join(configDir, "skypaw", "config.json")
+	path := filepath.Join(configDir, "Zenpaw Labs", "skypaw", "config.json")
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return "", err

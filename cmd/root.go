@@ -44,17 +44,6 @@ var rootCmd = &cobra.Command{
 			defer stop()
 		}
 
-		if debugger {
-			closeLogger, err := startLogger()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
-			}
-			defer closeLogger()
-			log.Info("Logger initialized successfully")
-		} else {
-			log.SetOutput(io.Discard)
-		}
-
 		if install {
 			err := path_utils.AddToPath()
 			if err != nil {
@@ -88,7 +77,19 @@ var rootCmd = &cobra.Command{
 			}
 			return
 		}
-		userCfg := InitConfig()
+		userCfg := InitConfig(cmd)
+
+		if debugger || userCfg.AlwaysRunDebugger {
+			closeLogger, err := startLogger()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
+			}
+			defer closeLogger()
+			log.Info("Logger initialized successfully")
+		} else {
+			log.SetOutput(io.Discard)
+		}
+
 		p := tea.NewProgram(ui.InitialModel(userCfg, semVersion), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			panic(err)
@@ -103,7 +104,7 @@ func Execute() {
 	}
 }
 
-func InitConfig() cfg.UserConfig {
+func InitConfig(cmd *cobra.Command) cfg.UserConfig {
 	userCfg := cfg.LoadConfig()
 	if len(location) > 0 {
 		userCfg.UserCity = location
@@ -113,7 +114,9 @@ func InitConfig() cfg.UserConfig {
 		userCfg.OptionalLocationProvider = optionalProvider
 	}
 
-	userCfg.Units = cfg.ParseUnitSystem(units)
+	if cmd.Flags().Changed("units") {
+		userCfg.Units = cfg.ParseUnitSystem(units)
+	}
 
 	return userCfg
 }

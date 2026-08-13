@@ -6,7 +6,7 @@ const (
 	// Ui colors
 	ColorLocation         = lipgloss.Color("#40E0D0")
 	ColorTemp             = lipgloss.Color("#FFD700")
-	ColorWeatherName      = lipgloss.Color("#DA70D6")
+	ColorWeatherName      = lipgloss.Color("#9bcbff")
 	ColorTime             = lipgloss.Color("#5FFFD7")
 	ColorDate             = lipgloss.Color("#98FB98")
 	ColorHints            = lipgloss.Color("#4D4D4D")

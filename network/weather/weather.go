@@ -122,6 +122,11 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 	values.Add("latitude", strconv.FormatFloat(locationInfo.Latitude, 'f', -1, 64))
 	values.Add("longitude", strconv.FormatFloat(locationInfo.Longitude, 'f', -1, 64))
 	values.Add("current", args)
+	if unitSystem == cfg.Imperial {
+		values.Set("temperature_unit", "fahrenheit")
+	} else {
+		values.Set("temperature_unit", "celsius")
+	}
 	fullUrl := network.WeatherEndpointApi + "forecast?" + values.Encode()
 	log.Debug("Current weather URL", weatherUrl, fullUrl)
 
@@ -143,7 +148,7 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 	return weatherResponse, locationInfo, nil
 }
 
-func GetHourlyWeather(location geocoding.LocationInfo) (HourlyWeatherResponse, error) {
+func GetHourlyWeather(location geocoding.LocationInfo, unitSystem cfg.UnitSystem) (HourlyWeatherResponse, error) {
 	h := []string{"temperature_2m"}
 	values := url.Values{}
 	values.Add("latitude", strconv.FormatFloat(location.Latitude, 'f', -1, 64))
@@ -152,6 +157,11 @@ func GetHourlyWeather(location geocoding.LocationInfo) (HourlyWeatherResponse, e
 	values.Add("hourly", args)
 	values.Add("past_days", "1")
 	values.Add("forecast_days", "2")
+	if unitSystem == cfg.Imperial {
+		values.Set("temperature_unit", "fahrenheit")
+	} else {
+		values.Set("temperature_unit", "celsius")
+	}
 
 	fullUrl := network.WeatherEndpointApi + "forecast?" + values.Encode()
 	log.Debug("Hourly weather URL", weatherUrl, fullUrl)
