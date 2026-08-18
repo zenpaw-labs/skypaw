@@ -115,7 +115,6 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 	)
 	rq := []string{"temperature_2m", "is_day", "weather_code", "wind_speed_10m"}
 	// TODO: Pressure, Wind (with arrow of direction) speed, "feels like", humidityHourly.
-	// TODO: Offline caching weather response
 	// TODO: Notification, if rain/thunderstorm coming.
 	args := strings.Join(rq, ",")
 	values := url.Values{}

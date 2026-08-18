@@ -28,10 +28,6 @@ const (
 	LoadingWeather   = 2
 	LoadingSunrise   = 3
 	LoadingHourly    = 4
-
-	// Logging
-	diagram = "Diagram"
-	model   = "Model"
 )
 
 type Model struct {
@@ -43,12 +39,14 @@ type Model struct {
 	Location         geocoding.LocationInfo
 
 	// Status
-	CurrentTime    time.Time
-	CurrentWeekday time.Weekday
-	CurrentMonth   time.Month
-	IsLoading      int
-	Err            error
-	spinner        spinner.Model
+	CurrentTime     time.Time
+	CurrentWeekday  time.Weekday
+	CurrentMonth    time.Month
+	IsLoading       int
+	isOfflineMode   bool
+	offlineModeData weather.WeatherCache
+	Err             error
+	spinner         spinner.Model
 
 	// Window
 	Width  int
@@ -119,6 +117,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case SunriseAndSunsetMsg:
 		m.IsLoading = LoadingCompleted
 		m.SunriseAndSunset = msg.SunriseAndSunsetResponse
+
+		if m.Config.UseWeatherCache {
+			go weather.Save(m.Location, m.Weather, m.Hourly, m.SunriseAndSunset, m.Config.Units)
+		}
 		return m, DoTick()
 
 	case RefreshWeatherMsg:
@@ -152,6 +154,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.String() == "r" {
+			m.isOfflineMode = false
 			m.Err = nil
 
 			if m.Location.City == "" && m.Location.Region == "" {
@@ -183,29 +186,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ErrMsg:
 		m.IsLoading = LoadingError
 		var netErr net.Error
+
 		if errors.As(msg.Err, &netErr) {
-			if netErr.Timeout() {
-				if m.Config.ColorfulTUI {
-					t := "Network timeout."
-					ts := lipgloss.NewStyle().Foreground(ColorOfflineOrTimeout)
-					t = ts.Render(t)
-					m.Err = fmt.Errorf("%s", t)
-				}
-			} else {
-				t := "You're offline."
-				if m.Config.ColorfulTUI {
-					ts := lipgloss.NewStyle().Foreground(ColorOfflineOrTimeout)
-					t = ts.Render(t)
-				}
-				m.Err = fmt.Errorf("%s", t)
+			if m.tryRestoreFromCache() {
+				return m, nil
 			}
+
+			t := "You're offline."
+			if netErr.Timeout() {
+				t = "Network timeout."
+			}
+
+			if m.Config.ColorfulTUI {
+				t = lipgloss.NewStyle().Foreground(ColorOfflineOrTimeout).Render(t)
+			}
+			m.Err = fmt.Errorf("%s", t)
 		} else {
 			m.Err = msg.Err
 		}
+
 		log.Error(m.Err)
 		return m, nil
 	}
-
 	return m, nil
 }
 
@@ -356,7 +358,18 @@ func (m Model) View() string {
 
 	}
 
-	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr, hints)
+	var offlineModeNotice string
+	if m.isOfflineMode {
+		offlineModeNotice = fmt.Sprintf("\nOffline mode • Last update at %s", m.offlineModeData.LastUpdatedAt.Format("15:04 (02.01.2006)"))
+		style := lipgloss.NewStyle().
+			Align(lipgloss.Center).
+			Width(m.Width)
+		if m.Config.ColorfulTUI {
+			style = style.Foreground(ColorOfflineOrTimeout)
+		}
+		offlineModeNotice = style.Render(offlineModeNotice) + "\n"
+	}
+	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr, offlineModeNotice, hints)
 
 	footer := lipgloss.JoinVertical(lipgloss.Center, diagram)
 	footerHeight := lipgloss.Height(footer)
@@ -516,4 +529,26 @@ func padLinesToEqualWidth(s string) string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func (m *Model) tryRestoreFromCache() bool {
+	if !m.Config.UseWeatherCache {
+		return false
+	}
+
+	data, err := weather.Load(m.Config)
+	if err != nil {
+		log.Error("Failed to load weather cache", "err", err)
+		return false
+	}
+	m.offlineModeData = *data
+	m.Location = m.offlineModeData.Location
+	m.Weather = m.offlineModeData.Weather
+	m.Hourly = m.offlineModeData.Hourly
+	m.SunriseAndSunset = m.offlineModeData.SunriseSunset
+
+	m.IsLoading = LoadingCompleted
+	m.isOfflineMode = true
+	m.Err = nil
+	return true
 }

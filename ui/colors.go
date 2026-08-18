@@ -12,7 +12,7 @@ const (
 	ColorHints            = lipgloss.Color("#4D4D4D")
 	ColorError            = lipgloss.Color("#ff0000")
 	ColorLoading          = lipgloss.Color("#ff7ad7")
-	ColorOfflineOrTimeout = lipgloss.Color("#333434")
+	ColorOfflineOrTimeout = lipgloss.Color("#3f3f3f")
 
 	// Weather colors
 	ColorWeatherClear            = lipgloss.Color("#FFD700")

@@ -31,3 +31,9 @@ func GetConfigFile() (string, error) {
 
 	return path, nil
 }
+
+func GetWeatherCacheDir() string {
+	cachedir, _ := os.UserConfigDir()
+	path := filepath.Join(cachedir, "Zenpaw Labs", "skypaw", "last_weather_update.json")
+	return path
+}

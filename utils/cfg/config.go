@@ -28,14 +28,15 @@ const (
 type UserConfig struct {
 	UserCity                      string     `json:"city"`
 	OptionalLocationProvider      int        `json:"location_provider_id"`
-	WindowsLocalLocationDetection bool       `json:"windows_local_location_detection"`
-	HideDiagram                   bool       `json:"hide_diagram"`
 	Units                         UnitSystem `json:"units"`
 	DiagramHoursBefore            int        `json:"diagram_hours_before"`
 	DiagramHoursAfter             int        `json:"diagram_hours_after"`
+	WindowsLocalLocationDetection bool       `json:"windows_local_location_detection"`
+	UseWeatherCache               bool       `json:"use_weather_cache"`
+	HideDiagram                   bool       `json:"hide_diagram"`
 	ShowHints                     bool       `json:"show_hints"`
 	ColorfulTUI                   bool       `json:"colorful_tui"`
-	AlwaysRunDebugger             bool       `json:"alwaysRunDebugger"`
+	AlwaysRunDebugger             bool       `json:"always_run_debugger"`
 }
 
 func LoadConfig() UserConfig {
@@ -56,7 +57,7 @@ func LoadConfig() UserConfig {
 }
 
 func SaveConfig(cfg UserConfig) error {
-	data, err := json.MarshalIndent(cfg, "", " ")
+	data, err := json.MarshalIndent(cfg, "", "    ")
 	if err != nil {
 		return err
 	}
@@ -94,6 +95,7 @@ func DefaultConfig() UserConfig {
 		ColorfulTUI:                   true,
 		DiagramHoursBefore:            2,
 		DiagramHoursAfter:             6,
+		UseWeatherCache:               true,
 	}
 }
 
