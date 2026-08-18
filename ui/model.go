@@ -220,6 +220,15 @@ func (m Model) View() string {
 		LoadingSunrise:  "🌇 Loading sunrise data",
 	}
 
+	if m.Config.SingleLineOutput {
+		return m.renderSingleLine(loadingText)
+	} else {
+		return m.renderFullScreen(loadingText)
+	}
+}
+
+func (m Model) renderFullScreen(loadingText map[int]string) string {
+
 	if m.IsLoading == LoadingError || m.Err != nil {
 		var content string
 		if m.Config.ColorfulTUI {
@@ -551,4 +560,54 @@ func (m *Model) tryRestoreFromCache() bool {
 	m.isOfflineMode = true
 	m.Err = nil
 	return true
+}
+
+func (m Model) renderSingleLine(loadingText map[int]string) string {
+	if m.IsLoading == LoadingError || m.Err != nil {
+		errStr := m.Err.Error()
+		if m.Config.ColorfulTUI {
+			errStr = lipgloss.NewStyle().Foreground(ColorError).Render(errStr)
+		}
+		return fmt.Sprintf("❌ Error: %s", errStr)
+	}
+
+	if m.IsLoading != LoadingCompleted {
+		text := loadingText[m.IsLoading]
+		if m.Config.ColorfulTUI {
+			text = lipgloss.NewStyle().Foreground(ColorLoading).Render(text)
+		}
+		return fmt.Sprintf("%s %s", m.spinner.View(), text)
+	}
+
+	var loc string
+	if len(m.Location.Region) == 0 {
+		loc = fmt.Sprintf("📍 %s", m.Location.City)
+	} else if len(m.Location.City) == 0 {
+		loc = fmt.Sprintf("📍 %s", m.Location.Region)
+	} else {
+		loc = fmt.Sprintf("📍 %s, %s", m.Location.Region, m.Location.City)
+	}
+
+	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
+
+	var temp string
+	if m.Config.Units == cfg.Imperial {
+		temp = fmt.Sprintf("%.1f°F", m.Weather.CurrentWeather.Temperature2m)
+	} else {
+		temp = fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
+	}
+
+	offlineNotice := ""
+	if m.isOfflineMode {
+		offlineNotice = " (offline)"
+	}
+	if m.Config.ColorfulTUI {
+		loc = lipgloss.NewStyle().Foreground(ColorLocation).Render(loc)
+		temp = lipgloss.NewStyle().Foreground(ColorTemp).Render(temp)
+		weatherName = lipgloss.NewStyle().Foreground(ColorWeatherName).Render(weatherName)
+		if offlineNotice != "" {
+			offlineNotice = lipgloss.NewStyle().Foreground(ColorOfflineOrTimeout).Render(offlineNotice)
+		}
+	}
+	return fmt.Sprintf("%s: %s, %s%s", loc, temp, weatherName, offlineNotice)
 }

@@ -32,6 +32,7 @@ var (
 	units            string
 	hoursAfter       int
 	hoursBefore      int
+	singlelineoutput bool
 )
 
 var rootCmd = &cobra.Command{
@@ -90,7 +91,13 @@ var rootCmd = &cobra.Command{
 			log.SetOutput(io.Discard)
 		}
 
-		p := tea.NewProgram(ui.InitialModel(userCfg, semVersion), tea.WithAltScreen())
+		var opts []tea.ProgramOption
+
+		if !userCfg.SingleLineOutput {
+			opts = append(opts, tea.WithAltScreen())
+		}
+
+		p := tea.NewProgram(ui.InitialModel(userCfg, semVersion), opts...)
 		if _, err := p.Run(); err != nil {
 			panic(err)
 		}
@@ -118,6 +125,10 @@ func InitConfig(cmd *cobra.Command) cfg.UserConfig {
 		userCfg.Units = cfg.ParseUnitSystem(units)
 	}
 
+	if cmd.Flags().Changed("single") || singlelineoutput {
+		userCfg.SingleLineOutput = singlelineoutput
+	}
+
 	return userCfg
 }
 
@@ -127,9 +138,9 @@ func init() {
 	rootCmd.Flags().StringVarP(&location, "location", "l", "", "location to check weather for.")
 	rootCmd.Flags().IntVarP(&optionalProvider, "provider", "p", -1, "select a location detector provider: enter 1 for ipwho, 2 for ipapi and 3 for ipinfo.")
 	rootCmd.Flags().StringVarP(&units, "units", "u", "metric", "measure units: metric or imperial")
+	rootCmd.Flags().BoolVarP(&singlelineoutput, "single", "s", false, "single line output")
 	rootCmd.Flags().IntVar(&hoursBefore, "hours-before", 2, "hours of past data on temperature graph")
 	rootCmd.Flags().IntVar(&hoursAfter, "hours-after", 6, "hours of future data on temperature graph")
-	// TODO: Single line output
 
 	// Service flags
 	rootCmd.Flags().BoolVarP(&version, "version", "v", false, "displays current version of the app.")

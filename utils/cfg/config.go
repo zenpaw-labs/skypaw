@@ -33,6 +33,7 @@ type UserConfig struct {
 	DiagramHoursAfter             int        `json:"diagram_hours_after"`
 	WindowsLocalLocationDetection bool       `json:"windows_local_location_detection"`
 	UseWeatherCache               bool       `json:"use_weather_cache"`
+	SingleLineOutput              bool       `json:"single_line_output"`
 	HideDiagram                   bool       `json:"hide_diagram"`
 	ShowHints                     bool       `json:"show_hints"`
 	ColorfulTUI                   bool       `json:"colorful_tui"`
@@ -96,6 +97,7 @@ func DefaultConfig() UserConfig {
 		DiagramHoursBefore:            2,
 		DiagramHoursAfter:             6,
 		UseWeatherCache:               true,
+		SingleLineOutput:              false,
 	}
 }
 
