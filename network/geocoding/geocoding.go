@@ -213,24 +213,12 @@ func SearchLocation(name string) LocationInfo {
 	params.Add("name", name)
 	fullUrl := network.GeocodingEndpointApi + "search?" + params.Encode()
 
-	resp, err := http.Get(fullUrl)
-	if err != nil {
-		fmt.Println("An error occurred: ", err)
-		return locatonInfo
-	}
+	resp, _ := http.Get(fullUrl)
 	defer resp.Body.Close()
 
-	response, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("An error occurred: ", err)
-		return locatonInfo
-	}
+	response, _ := io.ReadAll(resp.Body)
 
-	err = json.Unmarshal(response, &geoData)
-	if err != nil {
-		fmt.Println("An error occurred: ", err)
-		return locatonInfo
-	}
+	json.Unmarshal(response, &geoData)
 	if len(geoData.Results) > 0 {
 		locatonInfo = geoData.Results[0]
 	}
