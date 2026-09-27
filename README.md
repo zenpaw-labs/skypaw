@@ -14,9 +14,11 @@ Run in shell:
 ```
 yay -S skypaw-bin
 ```
+### Other platforms
+See [release page](https://github.com/zenpaw-labs/skypaw/releases).
 
-### Others platforms
-Check the [release page](https://github.com/zenpaw-labs/skypaw/releases).
+## ⚙️ Configuration
+See docs of config file [here](CONFIG.md).
 
 ## ⌨️ Usage
 Simply run the following command:
