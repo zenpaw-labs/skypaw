@@ -212,7 +212,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-
+	// TODO: Custom output
 	loadingText := map[int]string{
 		LoadingLocation: "📍 Detecting location",
 		LoadingWeather:  "⛅ Fetching weather",
