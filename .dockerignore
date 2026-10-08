@@ -1,0 +1,8 @@
+/.idea
+/dist
+*.exe
+*.prof
+demo/
+.git
+.github
+*.md
