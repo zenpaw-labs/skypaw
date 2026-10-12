@@ -9,6 +9,7 @@ import (
 	"runtime/pprof"
 	"time"
 
+	"github.com/gen2brain/beeep"
 	"github.com/zenpaw-labs/skypaw/network"
 	"github.com/zenpaw-labs/skypaw/utils"
 	"github.com/zenpaw-labs/skypaw/utils/cfg"
@@ -96,7 +97,7 @@ var rootCmd = &cobra.Command{
 		if !userCfg.SingleLineOutput {
 			opts = append(opts, tea.WithAltScreen())
 		}
-
+		beeep.AppName = "skypaw"
 		p := tea.NewProgram(ui.InitialModel(userCfg, semVersion), opts...)
 		if _, err := p.Run(); err != nil {
 			panic(err)

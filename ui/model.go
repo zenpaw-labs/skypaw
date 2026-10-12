@@ -100,7 +100,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.IsLoading != LoadingCompleted {
 			m.IsLoading = LoadingHourly
 		}
-		return m, FetchHourlyWeather(m.Location, m.Config.Units)
+		return m, FetchHourlyWeather(m.Location, m.Config)
 
 	case HourlyWeatherMsg:
 		m.Hourly = msg.HourlyWeatherResponse
@@ -130,7 +130,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, tea.Batch(
 			FetchWeather(m.Location, m.Config.Units),
-			FetchHourlyWeather(m.Location, m.Config.Units),
+			FetchHourlyWeather(m.Location, m.Config),
 			DoWeatherRefreshTick(),
 		)
 

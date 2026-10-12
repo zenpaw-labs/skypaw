@@ -37,6 +37,8 @@ type UserConfig struct {
 	HideDiagram                   bool       `json:"hide_diagram"`
 	ShowHints                     bool       `json:"show_hints"`
 	ColorfulTUI                   bool       `json:"colorful_tui"`
+	BadWeatherNotification        bool       `json:"bad_weather_notification"`
+	BadWeatherLookahead           int        `json:"bad_weather_lookahead"`
 	AlwaysRunDebugger             bool       `json:"always_run_debugger"`
 }
 
@@ -98,6 +100,8 @@ func DefaultConfig() UserConfig {
 		DiagramHoursAfter:             6,
 		UseWeatherCache:               true,
 		SingleLineOutput:              false,
+		BadWeatherNotification:        true,
+		BadWeatherLookahead:           6,
 	}
 }
 

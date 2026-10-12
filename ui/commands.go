@@ -8,6 +8,7 @@ import (
 	"github.com/zenpaw-labs/skypaw/network/weather"
 	"github.com/zenpaw-labs/skypaw/utils/cfg"
 	"github.com/zenpaw-labs/skypaw/utils/location_utils"
+	"github.com/zenpaw-labs/skypaw/utils/notifications"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -32,11 +33,14 @@ func FetchSunriseAndSunset(l geocoding.LocationInfo) tea.Cmd {
 	}
 }
 
-func FetchHourlyWeather(l geocoding.LocationInfo, u cfg.UnitSystem) tea.Cmd {
+func FetchHourlyWeather(l geocoding.LocationInfo, u cfg.UserConfig) tea.Cmd {
 	return func() tea.Msg {
 		h, err := weather.GetHourlyWeather(l, u)
 		if err != nil {
 			return ErrMsg{fmt.Errorf("hourly weather error: %w", err)}
+		}
+		if u.BadWeatherNotification {
+			notifications.BadWeatherNotification(u, h)
 		}
 		return HourlyWeatherMsg{h}
 	}

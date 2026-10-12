@@ -22,5 +22,17 @@ archives:
   - format: binary
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
 
+nfpms:
+  - id: skypaw
+    package_name: skypaw
+    file_name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    maintainer: mykhailo <mykkhailo@protonmail.com>
+    description: Minimal weather CLI for the terminal
+    homepage: https://github.com/zenpaw-labs/skypaw
+    license: MIT
+    formats:
+      - deb
+      - rpm
+
 checksum:
   name_template: "checksums.txt"

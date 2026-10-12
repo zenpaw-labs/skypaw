@@ -71,9 +71,14 @@ type CurrentWeather struct {
 }
 
 type HourlyWeatherResponse struct {
+	/*
+		OpenMeteo API used.
+		Learn more: https://open-meteo.com/en/docs#hourly_weather_variables
+	*/
 	Hourly struct {
 		Time          []string  `json:"time"`
 		Temperature2m []float64 `json:"temperature_2m"`
+		WeatherCode   []int     `json:"weather_code"`
 	} `json:"hourly"`
 }
 
@@ -115,7 +120,6 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 	)
 	rq := []string{"temperature_2m", "is_day", "weather_code", "wind_speed_10m"}
 	// TODO: Pressure, Wind (with arrow of direction) speed, "feels like", humidityHourly.
-	// TODO: Notification, if rain/thunderstorm coming.
 	args := strings.Join(rq, ",")
 	values := url.Values{}
 	values.Add("latitude", strconv.FormatFloat(locationInfo.Latitude, 'f', -1, 64))
@@ -147,8 +151,8 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 	return weatherResponse, locationInfo, nil
 }
 
-func GetHourlyWeather(location geocoding.LocationInfo, unitSystem cfg.UnitSystem) (HourlyWeatherResponse, error) {
-	h := []string{"temperature_2m"}
+func GetHourlyWeather(location geocoding.LocationInfo, config cfg.UserConfig) (HourlyWeatherResponse, error) {
+	h := []string{"temperature_2m", "weather_code"}
 	values := url.Values{}
 	values.Add("latitude", strconv.FormatFloat(location.Latitude, 'f', -1, 64))
 	values.Add("longitude", strconv.FormatFloat(location.Longitude, 'f', -1, 64))
@@ -156,7 +160,7 @@ func GetHourlyWeather(location geocoding.LocationInfo, unitSystem cfg.UnitSystem
 	values.Add("hourly", args)
 	values.Add("past_days", "1")
 	values.Add("forecast_days", "2")
-	if unitSystem == cfg.Imperial {
+	if config.Units == cfg.Imperial {
 		values.Set("temperature_unit", "fahrenheit")
 	} else {
 		values.Set("temperature_unit", "celsius")
