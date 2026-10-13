@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/guptarohit/asciigraph"
 	"github.com/zenpaw-labs/skypaw/network/geocoding"
 	"github.com/zenpaw-labs/skypaw/network/weather"
@@ -211,7 +211,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	// TODO: Custom output
 	loadingText := map[int]string{
 		LoadingLocation: "📍 Detecting location",
@@ -219,12 +219,16 @@ func (m Model) View() string {
 		LoadingHourly:   "🕐 Loading hourly data",
 		LoadingSunrise:  "🌇 Loading sunrise data",
 	}
-
+	var rendered string
 	if m.Config.SingleLineOutput {
-		return m.renderSingleLine(loadingText)
+		rendered = m.renderSingleLine(loadingText)
 	} else {
-		return m.renderFullScreen(loadingText)
+		rendered = m.renderFullScreen(loadingText)
 	}
+
+	v := tea.NewView(rendered)
+	v.AltScreen = !m.Config.SingleLineOutput
+	return v
 }
 
 func (m Model) renderFullScreen(loadingText map[int]string) string {
@@ -238,8 +242,28 @@ func (m Model) renderFullScreen(loadingText map[int]string) string {
 			content = fmt.Sprintf("%s", m.Err.Error())
 		}
 		version := m.renderVersion()
-		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, content)
-		footer := lipgloss.Place(m.Width, 1, lipgloss.Right, lipgloss.Bottom, version)
+
+		headerHeight := m.Height - 1
+		if headerHeight < 0 {
+			headerHeight = 0
+		}
+
+		header := lipgloss.Place(
+			m.Width,
+			headerHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			content,
+		)
+
+		footer := lipgloss.Place(
+			m.Width,
+			1,
+			lipgloss.Right,
+			lipgloss.Bottom,
+			version,
+		)
+
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
 
@@ -253,8 +277,28 @@ func (m Model) renderFullScreen(loadingText map[int]string) string {
 		content := fmt.Sprintf("%s %s", m.spinner.View(), text)
 
 		version := m.renderVersion()
-		header := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, content)
-		footer := lipgloss.Place(m.Width, 1, lipgloss.Right, lipgloss.Bottom, version)
+
+		headerHeight := m.Height - 1
+		if headerHeight < 0 {
+			headerHeight = 0
+		}
+
+		header := lipgloss.Place(
+			m.Width,
+			headerHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			content,
+		)
+
+		footer := lipgloss.Place(
+			m.Width,
+			1,
+			lipgloss.Right,
+			lipgloss.Bottom,
+			version,
+		)
+
 		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 	}
 
@@ -380,16 +424,28 @@ func (m Model) renderFullScreen(loadingText map[int]string) string {
 	}
 	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr, offlineModeNotice, hints)
 
-	footer := lipgloss.JoinVertical(lipgloss.Center, diagram)
+	footer := ""
+	if diagram != "" {
+		footer = diagram
+	}
+
 	footerHeight := lipgloss.Height(footer)
+	availableHeight := m.Height - footerHeight
+	if availableHeight < 0 {
+		availableHeight = 0
+	}
 
 	centeredMain := lipgloss.Place(
 		m.Width,
-		m.Height-footerHeight,
+		availableHeight,
 		lipgloss.Center,
 		lipgloss.Center,
 		mainContent,
 	)
+
+	if footer == "" {
+		return centeredMain
+	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, centeredMain, footer)
 }
@@ -540,6 +596,7 @@ func padLinesToEqualWidth(s string) string {
 	return strings.Join(lines, "\n")
 }
 
+// TODO: Reserve space for hourly temperature
 func (m *Model) tryRestoreFromCache() bool {
 	if !m.Config.UseWeatherCache {
 		return false

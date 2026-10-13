@@ -1,8 +1,8 @@
 package ui
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
-const (
+var (
 	// Ui colors
 	ColorLocation         = lipgloss.Color("#40E0D0")
 	ColorTemp             = lipgloss.Color("#FFD700")

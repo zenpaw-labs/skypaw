@@ -1,8 +1,6 @@
 package ui
 
-import (
-	"github.com/charmbracelet/lipgloss"
-)
+import "image/color"
 
 // TODO: Animation of weather
 const (
@@ -120,7 +118,7 @@ const (
 
 type WeatherArt struct {
 	Art   string
-	Color lipgloss.Color
+	Color color.Color
 }
 
 func GetCurrentWeatherArt(weatherCode int) WeatherArt {

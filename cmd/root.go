@@ -15,8 +15,8 @@ import (
 	"github.com/zenpaw-labs/skypaw/utils/cfg"
 	"github.com/zenpaw-labs/skypaw/utils/path_utils"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/log/v2"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/zenpaw-labs/skypaw/ui"
 )
@@ -92,13 +92,8 @@ var rootCmd = &cobra.Command{
 			log.SetOutput(io.Discard)
 		}
 
-		var opts []tea.ProgramOption
-
-		if !userCfg.SingleLineOutput {
-			opts = append(opts, tea.WithAltScreen())
-		}
 		beeep.AppName = "skypaw"
-		p := tea.NewProgram(ui.InitialModel(userCfg, semVersion), opts...)
+		p := tea.NewProgram(ui.InitialModel(userCfg, semVersion))
 		if _, err := p.Run(); err != nil {
 			panic(err)
 		}

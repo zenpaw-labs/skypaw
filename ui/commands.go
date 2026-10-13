@@ -10,7 +10,7 @@ import (
 	"github.com/zenpaw-labs/skypaw/utils/location_utils"
 	"github.com/zenpaw-labs/skypaw/utils/notifications"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func FetchWeather(location geocoding.LocationInfo, units cfg.UnitSystem) tea.Cmd {
