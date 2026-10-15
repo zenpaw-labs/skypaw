@@ -50,7 +50,7 @@ type notifyState struct {
 	lastSent time.Time
 }
 
-func BadWeatherNotification(config cfg.UserConfig, wtr weather.HourlyWeatherResponse) {
+func BadWeatherNotification(config cfg.UserConfig, wtr weather.HourlyWeatherResponse, city string) {
 	next := time.Now().Truncate(time.Hour).Add(time.Hour)
 	limit := next.Add(time.Duration(config.BadWeatherLookahead))
 
@@ -68,7 +68,7 @@ func BadWeatherNotification(config cfg.UserConfig, wtr weather.HourlyWeatherResp
 				log.Debug("Bad Weather Notification", "weather_code", code)
 				err := beeep.Alert(
 					"Bad Weather Notice",
-					fmt.Sprintf("%s is expected at %s", weather.GetCurrentWeatherName(code), t.In(time.Local).Format("15:04")),
+					fmt.Sprintf("%s is expected in %s at %s", weather.GetCurrentWeatherName(code), city, t.In(time.Local).Format("15:04")),
 					"",
 				)
 				if err != nil {

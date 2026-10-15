@@ -40,7 +40,7 @@ func FetchHourlyWeather(l geocoding.LocationInfo, u cfg.UserConfig) tea.Cmd {
 			return ErrMsg{fmt.Errorf("hourly weather error: %w", err)}
 		}
 		if u.BadWeatherNotification {
-			notifications.BadWeatherNotification(u, h)
+			notifications.BadWeatherNotification(u, h, l.City)
 		}
 		return HourlyWeatherMsg{h}
 	}

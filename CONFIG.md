@@ -27,3 +27,5 @@ Default provider: **IPInfo** (`location_provider_id: 3`)
 | `1` | IpWho |
 | `2` | IPApi |
 | `3` | IPInfo |
+
+## Custom output

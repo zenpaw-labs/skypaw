@@ -374,11 +374,8 @@ func (m Model) renderFullScreen(loadingText map[int]string) string {
 	} else {
 		temp = fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
 	}
-	var diagram string
 
-	if !m.Config.HideDiagram {
-		diagram = m.renderHourlyTemperature()
-	}
+	diagram := m.renderHourlyTemperature()
 
 	var art string
 	artStyle := lipgloss.NewStyle().
@@ -424,33 +421,37 @@ func (m Model) renderFullScreen(loadingText map[int]string) string {
 	}
 	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr, offlineModeNotice, hints)
 
-	footer := ""
-	if diagram != "" {
-		footer = diagram
-	}
-
-	footerHeight := lipgloss.Height(footer)
-	availableHeight := m.Height - footerHeight
-	if availableHeight < 0 {
-		availableHeight = 0
-	}
-
-	centeredMain := lipgloss.Place(
+	screen := lipgloss.Place(
 		m.Width,
-		availableHeight,
+		m.Height,
 		lipgloss.Center,
 		lipgloss.Center,
 		mainContent,
 	)
 
-	if footer == "" {
-		return centeredMain
+	if m.Config.HideDiagram || diagram == "" {
+		return screen
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, centeredMain, footer)
+	const footerMargin = 1
+	return overlayBottom(screen, diagram, footerMargin)
+}
+
+func overlayBottom(base, overlay string, margin int) string {
+	b := strings.Split(base, "\n")
+	o := strings.Split(overlay, "\n")
+
+	start := len(b) - len(o) - margin
+	if start < 0 {
+		return base
+	}
+
+	copy(b[start:], o)
+	return strings.Join(b, "\n")
 }
 
 func (m Model) renderHourlyTemperature() string {
+	// TODO: Colored hourly temperature
 	if len(m.Hourly.Hourly.Temperature2m) == 0 {
 		return ""
 	}
@@ -596,7 +597,6 @@ func padLinesToEqualWidth(s string) string {
 	return strings.Join(lines, "\n")
 }
 
-// TODO: Reserve space for hourly temperature
 func (m *Model) tryRestoreFromCache() bool {
 	if !m.Config.UseWeatherCache {
 		return false
