@@ -451,7 +451,6 @@ func overlayBottom(base, overlay string, margin int) string {
 }
 
 func (m Model) renderHourlyTemperature() string {
-	// TODO: Colored hourly temperature
 	if len(m.Hourly.Hourly.Temperature2m) == 0 {
 		return ""
 	}
@@ -487,14 +486,30 @@ func (m Model) renderHourlyTemperature() string {
 		}
 		return ""
 	}
-	graph := asciigraph.Plot(
-		slicedTemps,
+	lo, hi := slicedTemps[0], slicedTemps[0]
+	for _, t := range slicedTemps {
+		lo = math.Min(lo, t)
+		hi = math.Max(hi, t)
+	}
+
+	opts := []asciigraph.Option{
 		asciigraph.Width(width),
 		asciigraph.Height(height),
 		asciigraph.XAxisRange(0, float64(len(slicedTemps)-1)),
 		asciigraph.XAxisValueFormatter(xAxisFormatter),
 		asciigraph.Precision(0),
-	)
+		asciigraph.LowerBound(lo),
+		asciigraph.UpperBound(hi),
+	}
+
+	var graph string
+	if m.Config.ColorfulTUI {
+		series, colors := colorizedSeries(slicedTemps, m.Config.Units == cfg.Imperial)
+		opts = append(opts, asciigraph.SeriesColors(colors...))
+		graph = asciigraph.PlotMany(series, opts...)
+	} else {
+		graph = asciigraph.Plot(slicedTemps, opts...)
+	}
 
 	return lipgloss.PlaceHorizontal(
 		m.Width,
@@ -595,6 +610,61 @@ func padLinesToEqualWidth(s string) string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+type tempBand struct {
+	max   float64
+	color asciigraph.AnsiColor
+}
+
+var tempBands = []tempBand{
+	{0, asciigraph.Blue},
+	{15, asciigraph.Cyan},
+	{25, asciigraph.Yellow},
+	{math.Inf(1), asciigraph.Red},
+}
+
+func tempBandIndex(t float64, imperial bool) int {
+	if imperial {
+		t = (t - 32) * 5 / 9
+	}
+	for i, b := range tempBands {
+		if t < b.max {
+			return i
+		}
+	}
+	return len(tempBands) - 1
+}
+
+func colorizedSeries(temps []float64, imperial bool) ([][]float64, []asciigraph.AnsiColor) {
+	cats := make([]int, len(temps))
+	for i, t := range temps {
+		cats[i] = tempBandIndex(t, imperial)
+	}
+
+	var series [][]float64
+	var colors []asciigraph.AnsiColor
+
+	for k, band := range tempBands {
+		s := make([]float64, len(temps))
+		used := false
+		for i, t := range temps {
+			in := cats[i] == k ||
+				(i > 0 && cats[i-1] == k) ||
+				(i < len(temps)-1 && cats[i+1] == k)
+			if in {
+				s[i] = t
+				used = true
+			} else {
+				s[i] = math.NaN()
+			}
+		}
+		if used {
+			series = append(series, s)
+			colors = append(colors, band.color)
+		}
+	}
+	return series, colors
 }
 
 func (m *Model) tryRestoreFromCache() bool {
