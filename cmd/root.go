@@ -109,6 +109,7 @@ func Execute() {
 
 func InitConfig(cmd *cobra.Command) cfg.UserConfig {
 	userCfg := cfg.LoadConfig()
+	ui.ApplyColors(userCfg.Colors)
 	if len(location) > 0 {
 		userCfg.UserCity = location
 	}
@@ -123,6 +124,13 @@ func InitConfig(cmd *cobra.Command) cfg.UserConfig {
 
 	if cmd.Flags().Changed("single") || singlelineoutput {
 		userCfg.SingleLineOutput = singlelineoutput
+	}
+
+	if cmd.Flags().Changed("hours-before") {
+		userCfg.DiagramHoursBefore = hoursBefore
+	}
+	if cmd.Flags().Changed("hours-after") {
+		userCfg.DiagramHoursAfter = hoursAfter
 	}
 
 	return userCfg

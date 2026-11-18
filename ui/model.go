@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"strings"
+	"text/template"
 	"time"
 
 	"charm.land/bubbles/v2/spinner"
@@ -57,18 +58,20 @@ type Model struct {
 
 	// Other
 	Version string
+	tmpl    *template.Template
 }
 
-func InitialModel(cfg cfg.UserConfig, version string) Model {
+func InitialModel(c cfg.UserConfig, version string) Model {
 	s := spinner.New()
 	s.Spinner = spinner.MiniDot
 
 	return Model{
-		Config:      cfg,
+		Config:      c,
 		Version:     version,
 		CurrentTime: time.Now(),
 		IsLoading:   LoadingLocation,
 		spinner:     s,
+		tmpl:        loadTemplate(c),
 	}
 }
 
@@ -175,11 +178,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.String() == "h" {
-			if m.Config.ShowHints {
-				m.Config.ShowHints = false
-			} else {
-				m.Config.ShowHints = true
-			}
+			m.Config.ShowHints = !m.Config.ShowHints
 			cfg.SaveConfig(m.Config)
 		}
 
@@ -212,7 +211,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() tea.View {
-	// TODO: Custom output
 	loadingText := map[int]string{
 		LoadingLocation: "📍 Detecting location",
 		LoadingWeather:  "⛅ Fetching weather",
@@ -232,209 +230,71 @@ func (m Model) View() tea.View {
 }
 
 func (m Model) renderFullScreen(loadingText map[int]string) string {
-
 	if m.IsLoading == LoadingError || m.Err != nil {
 		var content string
 		if m.Config.ColorfulTUI {
 			s := lipgloss.NewStyle().Foreground(ColorError)
-			content = fmt.Sprintf("%s", s.Render(m.Err.Error()))
+			content = s.Render(m.Err.Error())
 		} else {
-			content = fmt.Sprintf("%s", m.Err.Error())
+			content = m.Err.Error()
 		}
-		version := m.renderVersion()
-
-		headerHeight := m.Height - 1
-		if headerHeight < 0 {
-			headerHeight = 0
-		}
-
-		header := lipgloss.Place(
-			m.Width,
-			headerHeight,
-			lipgloss.Center,
-			lipgloss.Center,
-			content,
-		)
-
-		footer := lipgloss.Place(
-			m.Width,
-			1,
-			lipgloss.Right,
-			lipgloss.Bottom,
-			version,
-		)
-
-		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
+		return m.placeWithVersion(content)
 	}
 
-	if m.IsLoading != LoadingCompleted && m.IsLoading != LoadingError {
+	if m.IsLoading != LoadingCompleted {
 		text := loadingText[m.IsLoading]
 		if m.Config.ColorfulTUI {
-			textStyle := lipgloss.NewStyle().Foreground(ColorLoading)
-			text = textStyle.Render(text)
+			text = lipgloss.NewStyle().Foreground(ColorLoading).Render(text)
 		}
-
-		content := fmt.Sprintf("%s %s", m.spinner.View(), text)
-
-		version := m.renderVersion()
-
-		headerHeight := m.Height - 1
-		if headerHeight < 0 {
-			headerHeight = 0
-		}
-
-		header := lipgloss.Place(
-			m.Width,
-			headerHeight,
-			lipgloss.Center,
-			lipgloss.Center,
-			content,
-		)
-
-		footer := lipgloss.Place(
-			m.Width,
-			1,
-			lipgloss.Right,
-			lipgloss.Bottom,
-			version,
-		)
-
-		return lipgloss.JoinVertical(lipgloss.Left, header, footer)
+		return m.placeWithVersion(fmt.Sprintf("%s %s", m.spinner.View(), text))
 	}
 
 	weatherArt := GetCurrentWeatherArt(m.Weather.CurrentWeather.WeatherCode)
+	cleanRectArt, artWidth := cropArt(weatherArt.Art)
 
-	rawArt := strings.Trim(weatherArt.Art, "\n\r")
-	lines := strings.Split(rawArt, "\n")
-
-	minSpaces := -1
-	for _, line := range lines {
-		line = strings.TrimRight(line, "\r ")
-		if len(line) == 0 {
-			continue
-		}
-		leading := len(line) - len(strings.TrimLeft(line, " "))
-		if minSpaces == -1 || leading < minSpaces {
-			minSpaces = leading
-		}
-	}
-	if minSpaces == -1 {
-		minSpaces = 0
-	}
-
-	var croppedLines []string
-	artWidth := 0
-	for _, line := range lines {
-		line = strings.TrimRight(line, "\r ")
-		if len(line) >= minSpaces {
-			cropped := line[minSpaces:]
-			croppedLines = append(croppedLines, cropped)
-
-			w := lipgloss.Width(cropped)
-			if w > artWidth {
-				artWidth = w
-			}
-		} else {
-			croppedLines = append(croppedLines, "")
-		}
-	}
-
-	for i, line := range croppedLines {
-		w := lipgloss.Width(line)
-		if w < artWidth {
-			croppedLines[i] = line + strings.Repeat(" ", artWidth-w)
-		}
-	}
-
-	cleanRectArt := strings.Join(croppedLines, "\n")
-
-	timeStr := m.CurrentTime.Format("15:04:05")
-	dateStr := fmt.Sprintf(
-		"%s, %s %d",
-		m.CurrentTime.Weekday(),
-		m.CurrentTime.Month(),
-		m.CurrentTime.Day(),
-	)
-
-	var loc string
-
-	if len(m.Location.Region) == 0 || m.Location.Region == "" {
-		loc = fmt.Sprintf("📍 %s", m.Location.City)
-	} else if len(m.Location.City) == 0 || m.Location.City == "" {
-		loc = fmt.Sprintf("📍 %s", m.Location.Region)
-	} else {
-		loc = fmt.Sprintf("📍 %s, %s", m.Location.Region, m.Location.City)
-	}
-
-	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
-
-	var temp string
-	if m.Config.Units == cfg.Imperial {
-		temp = fmt.Sprintf("%.1f°F", m.Weather.CurrentWeather.Temperature2m)
-	} else {
-		temp = fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
-	}
-
-	diagram := m.renderHourlyTemperature()
-
-	var art string
-	artStyle := lipgloss.NewStyle().
-		Width(artWidth).
-		Align(lipgloss.Left)
+	artStyle := lipgloss.NewStyle().Width(artWidth).Align(lipgloss.Left)
 	if m.Config.ColorfulTUI {
-
-		locStyle := lipgloss.NewStyle().Foreground(ColorLocation)
-		tempStyle := lipgloss.NewStyle().Foreground(ColorTemp)
-		weatherNameStyle := lipgloss.NewStyle().Foreground(ColorWeatherName)
-		timeStyle := lipgloss.NewStyle().Foreground(ColorTime)
-		dateStyle := lipgloss.NewStyle().Foreground(ColorDate)
-
-		loc = locStyle.Render(loc)
-		temp = tempStyle.Render(temp)
-		weatherName = weatherNameStyle.Render(weatherName)
-		timeStr = timeStyle.Render(timeStr)
-		dateStr = dateStyle.Render(dateStr)
-
-		art = artStyle.Foreground(weatherArt.Color).Render(cleanRectArt)
-	} else {
-		art = artStyle.Render(cleanRectArt)
+		artStyle = artStyle.Foreground(weatherArt.Color)
 	}
+	art := artStyle.Render(cleanRectArt)
 
 	var hints string
 	if m.Config.ShowHints {
-		hints = "\nPress 'Q' or Ctrl+C for exit.\nTo show / hide diagram press 'S'.\nTo hide this message press 'H'."
-		hintsStyle := lipgloss.NewStyle().Foreground(ColorHints)
-		hints = hintsStyle.Render(hints)
-
-	}
-
-	var offlineModeNotice string
-	if m.isOfflineMode {
-		offlineModeNotice = fmt.Sprintf("\nOffline mode • Last update at %s", m.offlineModeData.LastUpdatedAt.Format("15:04 (02.01.2006)"))
-		style := lipgloss.NewStyle().
-			Align(lipgloss.Center).
-			Width(m.Width)
+		hints = "Press 'Q' or Ctrl+C for exit.\nTo show / hide diagram press 'S'.\nTo hide this message press 'H'."
 		if m.Config.ColorfulTUI {
-			style = style.Foreground(ColorOfflineOrTimeout)
+			hints = lipgloss.NewStyle().Foreground(ColorHints).Render(hints)
 		}
-		offlineModeNotice = style.Render(offlineModeNotice) + "\n"
 	}
-	mainContent := lipgloss.JoinVertical(lipgloss.Center, loc, "", art, "", temp, weatherName, "", timeStr, dateStr, offlineModeNotice, hints)
 
-	screen := lipgloss.Place(
-		m.Width,
-		m.Height,
-		lipgloss.Center,
-		lipgloss.Center,
-		mainContent,
-	)
+	data := m.outputData()
+	data.Art = art
+	data.Hints = hints
 
+	mainContent := lipgloss.NewStyle().
+		Align(lipgloss.Center).
+		Render(m.execTemplate(data))
+
+	screen := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, mainContent)
+
+	diagram := m.renderHourlyTemperature()
 	if m.Config.HideDiagram || diagram == "" {
 		return screen
 	}
 
 	const footerMargin = 1
 	return overlayBottom(screen, diagram, footerMargin)
+}
+
+func (m Model) placeWithVersion(content string) string {
+	headerHeight := m.Height - 1
+	if headerHeight < 0 {
+		headerHeight = 0
+	}
+
+	header := lipgloss.Place(m.Width, headerHeight, lipgloss.Center, lipgloss.Center, content)
+	footer := lipgloss.Place(m.Width, 1, lipgloss.Right, lipgloss.Bottom, m.renderVersion())
+
+	return lipgloss.JoinVertical(lipgloss.Left, header, footer)
 }
 
 func overlayBottom(base, overlay string, margin int) string {
@@ -706,35 +566,7 @@ func (m Model) renderSingleLine(loadingText map[int]string) string {
 		return fmt.Sprintf("%s %s", m.spinner.View(), text)
 	}
 
-	var loc string
-	if len(m.Location.Region) == 0 {
-		loc = fmt.Sprintf("📍 %s", m.Location.City)
-	} else if len(m.Location.City) == 0 {
-		loc = fmt.Sprintf("📍 %s", m.Location.Region)
-	} else {
-		loc = fmt.Sprintf("📍 %s, %s", m.Location.Region, m.Location.City)
-	}
-
-	weatherName := weather.GetCurrentWeatherName(m.Weather.CurrentWeather.WeatherCode)
-
-	var temp string
-	if m.Config.Units == cfg.Imperial {
-		temp = fmt.Sprintf("%.1f°F", m.Weather.CurrentWeather.Temperature2m)
-	} else {
-		temp = fmt.Sprintf("%.1f°C", m.Weather.CurrentWeather.Temperature2m)
-	}
-
-	offlineNotice := ""
-	if m.isOfflineMode {
-		offlineNotice = " (offline)"
-	}
-	if m.Config.ColorfulTUI {
-		loc = lipgloss.NewStyle().Foreground(ColorLocation).Render(loc)
-		temp = lipgloss.NewStyle().Foreground(ColorTemp).Render(temp)
-		weatherName = lipgloss.NewStyle().Foreground(ColorWeatherName).Render(weatherName)
-		if offlineNotice != "" {
-			offlineNotice = lipgloss.NewStyle().Foreground(ColorOfflineOrTimeout).Render(offlineNotice)
-		}
-	}
-	return fmt.Sprintf("%s: %s, %s%s", loc, temp, weatherName, offlineNotice)
+	out := m.execTemplate(m.outputData())
+	out = strings.ReplaceAll(out, "\r", "")
+	return strings.ReplaceAll(out, "\n", " ")
 }
