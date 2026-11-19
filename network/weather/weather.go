@@ -3,6 +3,7 @@ package weather
 import (
 	"encoding/json"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -62,12 +63,14 @@ type WeatherResponse struct {
 }
 
 type CurrentWeather struct {
-	Time          string  `json:"time"`
-	Interval      int     `json:"interval"`
-	Temperature2m float64 `json:"temperature_2m"`
-	WeatherCode   int     `json:"weather_code"`
-	WindSpeed10m  float64 `json:"wind_speed_10m"`
-	IsDay         int     `json:"is_day"`
+	Time               string  `json:"time"`
+	Interval           int     `json:"interval"`
+	Temperature2m      float64 `json:"temperature_2m"`
+	WeatherCode        int     `json:"weather_code"`
+	WindSpeed10m       float64 `json:"wind_speed_10m"`
+	WindDirection10m   int     `json:"wind_direction_10m"`
+	IsDay              int     `json:"is_day"`
+	WindDirectionArrow string
 }
 
 type HourlyWeatherResponse struct {
@@ -118,7 +121,7 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 	var (
 		weatherResponse WeatherResponse
 	)
-	rq := []string{"temperature_2m", "is_day", "weather_code", "wind_speed_10m"}
+	rq := []string{"temperature_2m", "is_day", "weather_code", "wind_speed_10m", "wind_direction_10m"}
 	// TODO: Pressure, Wind (with arrow of direction) speed, "feels like", humidityHourly.
 	args := strings.Join(rq, ",")
 	values := url.Values{}
@@ -127,8 +130,10 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 	values.Add("current", args)
 	if unitSystem == cfg.Imperial {
 		values.Set("temperature_unit", "fahrenheit")
+		values.Set("temperature_unit", "fahrenheit")
 	} else {
 		values.Set("temperature_unit", "celsius")
+		values.Set("wind_speed_unit", "kmh")
 	}
 	fullUrl := network.WeatherEndpointApi + "forecast?" + values.Encode()
 	log.Debug("Current weather URL", weatherUrl, fullUrl)
@@ -148,6 +153,7 @@ func GetCurrentWeatherByLocationInfo(locationInfo geocoding.LocationInfo, unitSy
 	if err != nil {
 		return weatherResponse, locationInfo, err
 	}
+	weatherResponse.CurrentWeather.WindDirectionArrow = WindArrow(float64(weatherResponse.CurrentWeather.WindDirection10m))
 	return weatherResponse, locationInfo, nil
 }
 
@@ -217,4 +223,9 @@ func GetSunriseAndSunset(location geocoding.LocationInfo) (SunriseAndSunsetRespo
 
 func GetCurrentWeatherName(weatherCode int) string {
 	return weatherCodes[weatherCode]
+}
+
+func WindArrow(deg float64) string {
+	arrows := []string{"↓", "↙", "←", "↖", "↑", "↗", "→", "↘"}
+	return arrows[int(math.Round(deg/45))%8]
 }

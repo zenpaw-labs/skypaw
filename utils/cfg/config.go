@@ -56,6 +56,7 @@ var DefaultTemplate = []string{
 	``,
 	`{{.Temp | theme "temp"}}`,
 	`{{.Condition | theme "weather"}}`,
+	`{{.WindDirection | theme "weather"}} {{.WindSpeed | theme "weather"}}`,
 	``,
 	`{{.TimeSec | theme "time"}}`,
 	`{{.DateLong | theme "date"}}{{if .Offline}}`,

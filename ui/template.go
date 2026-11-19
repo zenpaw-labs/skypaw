@@ -22,6 +22,9 @@ type OutputData struct {
 	Condition     string
 	Sunrise       string
 	Sunset        string
+	WindSpeed     string
+	WindDirection string
+	WindDegrees   string
 	Time          string
 	TimeSec       string
 	Date          string
@@ -111,9 +114,12 @@ func (m Model) outputData() OutputData {
 	}
 
 	unit := "°C"
+	windUnit := "km/h"
 	if m.Config.Units == cfg.Imperial {
 		unit = "°F"
+		windUnit = "mph"
 	}
+
 	t := m.Weather.CurrentWeather.Temperature2m
 
 	var offlineNotice string
@@ -142,6 +148,9 @@ func (m Model) outputData() OutputData {
 		Weekday:       m.CurrentTime.Weekday().String(),
 		Offline:       m.isOfflineMode,
 		OfflineNotice: offlineNotice,
+		WindSpeed:     fmt.Sprintf("%.1f %s", m.Weather.CurrentWeather.WindSpeed10m, windUnit),
+		WindDirection: weather.WindArrow(float64(m.Weather.CurrentWeather.WindDirection10m)),
+		WindDegrees:   fmt.Sprintf("%d", m.Weather.CurrentWeather.WindDirection10m),
 	}
 }
 

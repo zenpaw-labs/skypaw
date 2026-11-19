@@ -58,6 +58,11 @@ The following template functions are available:
 | `.Temp` | Temperature with unit | `19.1°C` |
 | `.TempValue` | Temperature as a number | `19.1` |
 | `.Condition` | Weather description | `Partly Cloudy` |
+| `.Sunrise` | Sunrise | `06:15` |
+| `.Sunset` | Sunset | `19:11` |
+| `.WindSpeed` | Wind Speed | `11 km/h` or `11 mph` |
+| `.WindDirection` | Arrow with direction of wind. | `"↓", "↙", "←", "↖", "↑", "↗", "→", "↘"` |
+| `.WindDegrees` | Wind direction in degrees (where it blows from). | `225` |
 | `.Time` | Time | `15:04` |
 | `.TimeSec` | Time with seconds | `15:04:05` |
 | `.Date` | Date | `18.11.2026` |
